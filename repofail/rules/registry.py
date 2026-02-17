@@ -1,0 +1,147 @@
+"""Rule metadata for --explain."""
+
+RULE_INFO = {
+    "torch_cuda_mismatch": {
+        "description": "Repo imports torch.cuda but host has no CUDA device.",
+        "severity": "HIGH",
+        "when": "repo.uses_torch and repo.requires_cuda and not host.cuda_available",
+        "fix": "Use CPU build, or run on a machine with NVIDIA GPU.",
+    },
+    "python_version_mismatch": {
+        "description": "Host Python version outside repo's requires-python range.",
+        "severity": "HIGH",
+        "when": "repo.python_version and host.python_version not in range",
+        "fix": "Install the required Python version (pyenv, conda, etc.).",
+    },
+    "python_eol": {
+        "description": "requires-python pins to EOL version (3.7 or 3.8).",
+        "severity": "HIGH",
+        "when": "requires-python allows only Python 3.7 or 3.8",
+        "fix": "Update to Python 3.9+ (3.10+ recommended).",
+    },
+    "abi_wheel_mismatch": {
+        "description": "arm64 + Python 3.12 + packages that lack wheels (bitsandbytes, xformers, etc.).",
+        "severity": "HIGH",
+        "when": "macOS arm64, Python 3.12+, and deps like bitsandbytes, torchvision, xformers",
+        "fix": "Use Python 3.11, or install LLVM and build from source.",
+    },
+    "apple_silicon_wheels": {
+        "description": "Repo requires packages with x86-only wheels on Apple Silicon.",
+        "severity": "MEDIUM/HIGH",
+        "when": "host is macOS arm64 and repo depends on nvidia-cuda-*, cuda-python, horovod, etc.",
+        "fix": "Use Rosetta, conda-forge, or check for ARM wheels.",
+    },
+    "native_toolchain_missing": {
+        "description": "Repo has native modules (node-gyp, Rust) but no C compiler.",
+        "severity": "MEDIUM",
+        "when": "repo has node_native_modules or has_cargo_toml and not host.has_compiler",
+        "fix": "Install Xcode CLI tools (macOS) or build-essential (Linux).",
+    },
+    "gpu_memory_risk": {
+        "description": "Large-model frameworks (diffusers, transformers) with low RAM.",
+        "severity": "LOW/MEDIUM",
+        "when": "repo.uses_torch + diffusers/transformers and host.ram_gb < 16",
+        "fix": "Use smaller models, increase swap, or run on a machine with more RAM.",
+    },
+    "node_native_windows": {
+        "description": "Node native modules (node-gyp) often fail to build on Windows.",
+        "severity": "MEDIUM",
+        "when": "host is Windows and repo has node_native_modules",
+        "fix": "Use WSL, or ensure Visual Studio Build Tools installed.",
+    },
+    "missing_system_libs": {
+        "description": "Repo requires libGL or ffmpeg but not detected on host.",
+        "severity": "MEDIUM",
+        "when": "repo.requires_libgl/ffmpeg and host missing them",
+        "fix": "Install libgl1-mesa-glx (Linux) or ffmpeg.",
+    },
+    "lora_mlx_scaling": {
+        "description": "LoRA scaling behavior differs on MLX backend.",
+        "severity": "MEDIUM",
+        "when": "repo uses PEFT/LoRA and host is macOS with Metal, no CUDA",
+        "fix": "Test LoRA behavior on MLX; consider CPU or CUDA for parity.",
+    },
+    "torchao_incompatible": {
+        "description": "torchao version incompatible with pinned torch.",
+        "severity": "LOW",
+        "when": "torchao 0.5+ with torch < 2.2",
+        "fix": "Pin torch==2.2+ or downgrade torchao to match torch.",
+    },
+    "python_minor_mismatch": {
+        "description": "Repo targets different Python minor than host.",
+        "severity": "INFO",
+        "when": "repo requires 3.11, host is 3.12 — minor differences may cause subtle issues",
+        "fix": "Use matching Python (pyenv/conda) or test thoroughly.",
+    },
+    "multiple_python_subprojects": {
+        "description": "Multiple Python subprojects detected.",
+        "severity": "INFO",
+        "when": "monorepo with 2+ Python packages",
+        "fix": "Ensure consistent virtualenvs or use per-subproject envs.",
+    },
+    "mixed_python_node": {
+        "description": "Mixed Python + Node monorepo.",
+        "severity": "INFO",
+        "when": "backend and frontend in same repo",
+        "fix": "Verify Node and Python versions match docs.",
+    },
+    "docker_python_mismatch": {
+        "description": "Dockerfile uses different Python than host.",
+        "severity": "INFO",
+        "when": "Docker pins Python X, host runs Y",
+        "fix": "Local dev may differ from container; align or document.",
+    },
+    "low_ram_multi_service": {
+        "description": "Multi-service repo with limited RAM.",
+        "severity": "INFO",
+        "when": "multiple subprojects or Docker, host RAM < 16GB",
+        "fix": "Consider swap, remote dev, or more RAM.",
+    },
+    "node_engine_mismatch": {
+        "description": "Host Node version outside package.json engines.node range.",
+        "severity": "HIGH",
+        "when": "engines.node in package.json and host node version violates",
+        "fix": "Install required Node version (nvm, fnm, or n).",
+    },
+    "node_eol": {
+        "description": "engines.node requires Node 14 or 16 (EOL).",
+        "severity": "HIGH",
+        "when": "package.json engines.node specifies Node 14.x or 16.x",
+        "fix": "Update to Node 18+ or 20+.",
+    },
+    "lock_file_missing": {
+        "description": "package.json has dependencies but no package-lock.json or yarn.lock.",
+        "severity": "HIGH",
+        "when": "package.json has deps but no lock file in same directory",
+        "fix": "Run npm install and commit package-lock.json (or yarn.lock).",
+    },
+    "port_collision_risk": {
+        "description": "Required service port already in use on host.",
+        "severity": "HIGH",
+        "when": "docker-compose/.env exposes ports that are already bound",
+        "fix": "Stop the service using the port, or change the port in docker-compose.",
+    },
+}
+
+# Suggested actions per rule (for output)
+RULE_SUGGESTIONS = {
+    "torch_cuda_mismatch": ["Use CPU build, or run on a machine with NVIDIA GPU"],
+    "python_version_mismatch": ["Install the required Python (pyenv, conda)"],
+    "apple_silicon_wheels": ["Use Rosetta, conda-forge, or check for ARM wheels"],
+    "native_toolchain_missing": ["Install Xcode CLI tools (macOS) or build-essential (Linux)"],
+    "gpu_memory_risk": ["Use smaller models, increase swap, or run on machine with more RAM"],
+    "node_native_windows": ["Use WSL, or install Visual Studio Build Tools"],
+    "node_engine_mismatch": ["Install required Node (nvm, fnm, n)"],
+    "node_eol": ["Update to Node 18+ or 20+"],
+    "lock_file_missing": ["Run npm install, commit package-lock.json or yarn.lock"],
+    "missing_system_libs": ["Install libgl1-mesa-glx (Linux) or ffmpeg"],
+    "lora_mlx_scaling": ["Test LoRA behavior on MLX; consider CPU or CUDA for parity"],
+    "torchao_incompatible": ["Pin torch>=2.2 or downgrade torchao to match torch version"],
+    "python_minor_mismatch": ["Use matching Python (pyenv/conda) or test thoroughly"],
+    "multiple_python_subprojects": ["Use consistent virtualenvs or per-subproject envs"],
+    "mixed_python_node": ["Verify Node and Python versions match docs"],
+    "docker_python_mismatch": ["Align local Python with Docker or document the difference"],
+    "low_ram_multi_service": ["Increase swap, use remote dev, or add RAM"],
+    "port_collision_risk": ["Stop the process using the port, or change port in docker-compose"],
+    "docker_only_dev": ["Use Dev Container or Docker; check README for native install"],
+}

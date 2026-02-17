@@ -1,0 +1,61 @@
+# repofail — CI guardrail for runtime compatibility
+#
+# In this repo: checks repofail itself.
+# To use in your repo: copy this file, change install step to:
+#   pip install git+https://github.com/youruser/repofail.git
+#   # or: pip install repofail  (when on PyPI)
+
+name: repofail
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.11", "3.12"]
+        exclude:
+          # Trim matrix: 3.11 on each OS is enough for quick CI
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: macos-latest
+            python: "3.10"
+          - os: macos-latest
+            python: "3.12"
+          - os: windows-latest
+            python: "3.10"
+          - os: windows-latest
+            python: "3.12"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install repofail
+        run: pip install -e .
+
+      - name: Run repofail
+        run: repofail --ci
+
+      - name: Test all commands
+        run: |
+          repofail
+          repofail -j
+          repofail gen .
+          repofail s
+          repofail a .
+
+      - name: Run tests
+        run: pip install pytest && pytest tests/ -v

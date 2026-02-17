@@ -1,0 +1,9 @@
+{
+  "repofail_contract": "1",
+  "generated_by": "repofail 0.1.0",
+  "repo": "repofail",
+  "requires": {
+    "python": ">=3.10"
+  },
+  "optional": {}
+}
