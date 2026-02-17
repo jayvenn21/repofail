@@ -16,7 +16,7 @@ from .parsers import (
     parse_workflow,
 )
 
-SKIP_PARTS = {".git", "__pycache__", ".venv", "venv", "node_modules", ".tox", "build", "dist", "eggs"}
+SKIP_PARTS = {".git", "__pycache__", ".venv", "venv", "node_modules", ".tox", "build", "dist", "eggs", "tests"}
 MAX_CONFIGS = 20  # Cap discovery to avoid huge monorepos
 
 

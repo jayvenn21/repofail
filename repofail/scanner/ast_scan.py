@@ -63,10 +63,12 @@ def _get_device_cuda_kw(node: ast.Call) -> tuple[str | None, int]:
 
 
 def _has_to_cuda(node: ast.Call) -> tuple[bool, int]:
-    """Check for .to(\"cuda\") or .to('cuda')."""
+    """Check for .to(\"cuda\") or .to('cuda') — must be Attribute with attr 'to'."""
+    if not isinstance(node.func, ast.Attribute) or node.func.attr != "to":
+        return False, 0
     if len(node.args) == 1 and isinstance(node.args[0], ast.Constant):
         val = node.args[0].value
-        if isinstance(val, str) and "cuda" in val.lower():
+        if isinstance(val, str) and val.lower() == "cuda":
             return True, node.lineno
     return False, 0
 
@@ -185,7 +187,7 @@ def scan_python_tree(repo_path: Path, max_files: int = 100) -> dict[str, Any]:
         "cuda_files": [],
         "cuda_usages": [],
     }
-    skip_dirs = {".git", "__pycache__", ".venv", "venv", "node_modules", ".tox", "build", "dist", "eggs"}
+    skip_dirs = {".git", "__pycache__", ".venv", "venv", "node_modules", ".tox", "build", "dist", "eggs", "tests"}
     count = 0
     for py in repo_path.rglob("*.py"):
         if count >= max_files:
