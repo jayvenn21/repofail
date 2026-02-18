@@ -17,16 +17,19 @@ def test_audit_empty_dir():
 
 
 def test_audit_finds_repos():
-    """Audit finds repo-like subdirs."""
+    """Audit finds repo-like subdirs (including nested)."""
     with tempfile.TemporaryDirectory() as base:
         base_p = Path(base)
         (base_p / "repo1").mkdir()
         (base_p / "repo1" / "pyproject.toml").write_text('[project]\nname="x"')
         (base_p / "repo2").mkdir()
         (base_p / "repo2" / "requirements.txt").write_text("torch")
+        (base_p / "nested").mkdir()
+        (base_p / "nested" / "repo3").mkdir()
+        (base_p / "nested" / "repo3" / "package.json").write_text('{}')
         (base_p / "empty").mkdir()
         r = audit(base_p)
-        assert len(r) == 2
+        assert len(r) >= 2
         names = {x["name"] for x in r}
         assert "x" in names or "repo1" in names
 

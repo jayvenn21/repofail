@@ -86,6 +86,10 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
         message="Apple Silicon wheel likely unavailable or Docker targets amd64.",
         reason="; ".join(reasons) + ". Installation may require emulation or fail.",
         host_summary="macOS arm64 (Apple Silicon)",
-        evidence=evidence,
+        evidence={
+            **evidence,
+            "determinism": 1.0,
+            "likely_error": "qemu emulation required / performance degradation",
+        },
         category="architecture_mismatch",
     )

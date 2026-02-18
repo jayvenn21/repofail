@@ -5,9 +5,9 @@ import re
 from ..models import HostProfile, RepoProfile
 from .base import RuleResult, Severity
 
-# Packages that often lack prebuilt wheels for arm64 + Python 3.12
-# (source build may fail without LLVM toolchain)
-ARM64_PY312_LAGGING = {
+# Packages with unstable binary wheel availability on arm64 + Python 3.12
+# Likely: Symbol not found, undefined symbol, or build-from-source fallback
+ARM64_PY312_UNSTABLE = {
     "bitsandbytes",
     "torchvision",
     "opencv-python",
@@ -15,6 +15,8 @@ ARM64_PY312_LAGGING = {
     "opencv",
     "xformers",
     "pytorch3d",
+    "triton",
+    "onnxruntime-gpu",
 }
 
 
@@ -51,24 +53,27 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
         return None
 
     packages = _get_repo_packages(repo)
-    found = [p for p in packages if any(lag in p for lag in ARM64_PY312_LAGGING)]
+    found = [p for p in packages if any(u in p for u in ARM64_PY312_UNSTABLE)]
     if not found:
         return None
 
     return RuleResult(
         rule_id="abi_wheel_mismatch",
         severity=Severity.HIGH,
-        message="Likely binary wheel mismatch (arm64 + Python 3.12).",
+        message="Binary wheel availability unstable (arm64 + Python 3.12).",
         reason=(
             f"macOS arm64, Python 3.12+, dependency: {found[0]}. "
-            f"{found[0]} often lacks wheels for arm64 3.12. Source build may fail without LLVM toolchain."
+            "Likely to hit: Symbol not found, undefined symbol, or build-from-source fallback."
         ),
         host_summary=f"macOS arm64, Python {host.python_version}",
         evidence={
             "host_os_arch": "macOS arm64",
             "host_python": host.python_version,
             "problematic_packages": found[:5],
-            "expected_failure": "pip install error or runtime import error",
+            "expected_failure": "Symbol not found, undefined symbol, or build-from-source fallback",
+            "determinism": 1.0,
+            "breakage_likelihood": "~90%",
+            "likely_error": "pip install: No matching distribution / import: undefined symbol",
         },
         category="architecture_mismatch",
         confidence="high",

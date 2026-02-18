@@ -348,7 +348,7 @@ def parse_env(path: Path) -> dict[str, Any]:
 
 def parse_workflow(path: Path) -> dict[str, Any]:
     """Parse a GitHub workflow YAML."""
-    result: dict[str, Any] = {"runs_on": [], "has_cuda": False}
+    result: dict[str, Any] = {"runs_on": [], "has_cuda": False, "python_versions": []}
     if not path.exists():
         return result
 
@@ -366,6 +366,16 @@ def parse_workflow(path: Path) -> dict[str, Any]:
             if isinstance(runs, str):
                 runs = [runs]
             result["runs_on"].extend(runs)
+            # Extract Python from strategy.matrix
+            strat = job.get("strategy", {}) or {}
+            matrix = strat.get("matrix", {}) or {}
+            for key in ("python-version", "python_version", "python"):
+                vals = matrix.get(key)
+                if vals:
+                    if isinstance(vals, list):
+                        result["python_versions"].extend(str(v) for v in vals)
+                    elif isinstance(vals, str):
+                        result["python_versions"].append(vals)
             steps = job.get("steps", [])
             for step in steps:
                 if isinstance(step, dict):

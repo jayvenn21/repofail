@@ -320,10 +320,17 @@ def audit_cmd(
     if not results:
         typer.echo("No repos found.")
         return
-    typer.echo(f"Audited {len(results)} repo(s):")
+    high = sum(1 for r in results if r["has_high"])
+    medium = sum(1 for r in results if r.get("rule_count", 0) > 0 and not r["has_high"])
+    clean = len(results) - high - medium
+    typer.echo(f"Found {len(results)} repos. {high} high-risk. {medium} medium. {clean} clean.")
+    typer.echo()
     for r in results:
-        status = "FAIL" if r["has_high"] else "OK"
-        typer.echo(f"  [{status}] {r['name']}: {r['rule_count']} issue(s) — {', '.join(r['rules']) or 'none'}")
+        status = "HIGH" if r["has_high"] else ("MEDIUM" if r.get("rule_count", 0) > 0 else "OK")
+        rules_preview = ", ".join(r["rules"][:5]) or "none"
+        if len(r.get("rules", [])) > 5:
+            rules_preview += " ..."
+        typer.echo(f"  [{status}] {r['name']}: {r['rule_count']} issue(s) — {rules_preview}")
 
 
 @app.command("sim")

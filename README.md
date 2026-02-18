@@ -1,6 +1,18 @@
 # repofail
 
-**Pre-flight environment check for repos.** Scans the repo (and host) and reports version mismatches, structure risks, and resource hints so you know what might break before you run the app.
+[![Compatibility](https://img.shields.io/badge/runtime-validated-brightgreen)][repo]
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue)][repo]
+[![Rules](https://img.shields.io/badge/rules-20%2B-deterministic)][repo]
+
+**repofail predicts why a repository will fail on your machine before you run it.**
+
+It analyzes:
+- **The repository** — dependencies, Docker, CI, engines, lock files
+- **Your machine** — OS, architecture, toolchain, runtime versions
+
+Then applies deterministic compatibility rules. No AI. No guessing. No cloud.
+
+[repo]: https://github.com/jayvenn21/repofail
 
 - **Offline** — no calls home
 - **Structured** — JSON for CI and scripts
@@ -27,22 +39,25 @@ repofail --json             # Machine-readable
 repofail --ci               # CI (exit code from score / severity)
 ```
 
-## Example output
-
-When issues are found, output is grouped by severity:
+## Example output (AutoGPT on Mac — Node 22.x required, host has v20)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
  repofail · environment risk
 ────────────────────────────────────────────────────────────────────────
  Score    39%  (1 high)
- 1 deterministic incompatibility(ies) detected.
+ 1 deterministic violation detected.
+ Summary  Primary blocker: Node 22.x required, host is Node v20.12.2.
 ────────────────────────────────────────────────────────────────────────
  HARD FAILURES
   ● Node engine constraint violated.
   package.json requires: node 22.x
   Host: node v20.12.2
-  This may cause install or runtime breakage.
+  Determinism: 1.0 (spec violation)
+  Likely error: npm ERR! code EBADENGINE / runtime version mismatch
+  Suggested fix:
+    nvm install 22  # or fnm, n
+    nvm use 22
 ────────────────────────────────────────────────────────────────────────
  Run with --json for machine output  ·  --ci for exit codes
 └──────────────────────────────────────────────────────────────────────┘
@@ -62,6 +77,49 @@ Clean repos get high scores with restraint — no invented problems:
 
 **Not:** a linter, a security scanner, or a replacement for your runtime. **Is:** a deterministic runtime compatibility analyzer that shows evidence, not guesses.
 
+## Why repofail Is Different
+
+| Tool | Installs | Predicts Failure | Uses Host Inspection | CI-Enforceable |
+|------|----------|------------------|----------------------|----------------|
+| pip | ✅ | ❌ | ❌ | ❌ |
+| Docker | ✅ | ❌ | ❌ | ❌ |
+| env diff | ❌ | ❌ | ❌ | ❌ |
+| AI assistant | ❓ | ❓ | ❌ | ❌ |
+| **repofail** | ❌ | ✅ | ✅ | ✅ |
+
+repofail creates the **runtime compatibility analysis** category — it inspects your host, reads repo contracts, and predicts breakage before install or run.
+
+## Three Demo Examples
+
+**Example 1 — CUDA** (ML Twitter will screenshot this)
+```
+  ● Hard-coded CUDA execution path detected
+  Found model.to("cuda") in trainer.py:32
+  No torch.cuda.is_available() guard
+  Host has no CUDA device
+  Determinism: 1.0 (code-level execution path)
+  Breakage likelihood: ~100%
+  Likely error: RuntimeError: CUDA error: no CUDA-capable device is detected
+```
+
+**Example 2 — Apple Silicon Docker** (Mac devs love this)
+```
+  ● Apple Silicon wheel likely unavailable or Docker targets amd64
+  Dockerfile uses --platform=linux/amd64
+  Host: macOS arm64
+  Determinism: 1.0
+  Likely error: qemu emulation required / performance degradation
+```
+
+**Example 3 — Node engine** (universally relatable)
+```
+  ● Node engine constraint violated
+  package.json requires: node 22.x
+  Host: node v20.12.2
+  Determinism: 1.0 (spec violation)
+  Likely error: npm ERR! code EBADENGINE / runtime version mismatch
+```
+
 ## Rule categories
 
 Rules are tagged for scalability and filtering:
@@ -78,14 +136,20 @@ Output in `--json` includes `category` per result.
 
 ## Scoring model
 
-**Success probability** (0–100%) is deterministic:
+**Compatibility Score** = `100 - Σ(weight × confidence × determinism)`
 
-- Start at 100
-- Subtract: **45** per HIGH, **20** per MEDIUM, **7** per LOW, **5** per INFO
-- Confidence multiplier: high 1.0, medium 0.75, low 0.5
-- Clamp to 0–100
+| Severity | Weight | Confidence | Determinism |
+|----------|--------|------------|-------------|
+| HIGH | 45 | 1.0 (high) / 0.75 (med) / 0.5 (low) | 1.0 for spec violations |
+| MEDIUM | 20 | same | 0.8–1.0 |
+| LOW | 7 | same | 0.5–1.0 |
+| INFO | 5 | same | structural only |
 
-Example: 1 HIGH → 55%. 2 HIGH → 10%. 5 INFO → 75%.
+Clamp to 10–100. **Score floors at 10%** — penalty is capped so 3 HIGH ≠ 7 HIGH (preserves nuance). When score ≤15% with HIGH rules, output shows "— fatal deterministic violations present".
+
+Per-rule calibration: `node_engine_mismatch` 50, `lock_file_missing` 40, `spec_drift` 25×0.6. Example: 1 HIGH → 55%. 2 HIGH → 10% (fatal deterministic violations present). 3 HIGH deterministic → 0%.
+
+**Determinism scale** (per rule): `1.0` = guaranteed failure · `0.75` = high likelihood · `0.6` = probabilistic (spec drift) · `0.5` = structural risk
 
 **Confidence** (rule-driven, defensible):
 
@@ -160,10 +224,11 @@ Run `python -m repofail.cli` if you haven't installed.
 | **Torch CUDA mismatch** | HIGH | Hard-coded CUDA, host has no GPU |
 | **Python version violation** | HIGH | Host outside `requires-python` range |
 | **Python EOL** | HIGH | requires-python pins to 3.7 or 3.8 (EOL) |
-| **ABI wheel mismatch** | HIGH | arm64 + Python 3.12 + bitsandbytes/torchvision/etc |
+| **ABI wheel mismatch** | HIGH | arm64 + Python 3.12 + bitsandbytes/xformers/triton/etc — Symbol not found, build-from-source |
 | **Apple Silicon wheel mismatch** | MEDIUM/HIGH | arm64 macOS + x86-only packages, Docker amd64 |
 | **Node engine mismatch** | HIGH | package.json engines.node vs host |
 | **Node EOL** | HIGH | engines.node requires Node 14 or 16 (EOL) |
+| **Spec drift** | HIGH | pyproject vs Docker vs CI — inconsistent Python versions |
 | **Lock file missing** | HIGH | package.json has deps, no package-lock.json or yarn.lock |
 | **Native toolchain missing** | HIGH (Cargo) / MEDIUM (Node) | Native build, no compiler |
 | **Port collision** | HIGH | docker-compose port already in use |
@@ -242,17 +307,43 @@ Versioned runtime expectations. Teams share contracts. CI checks drift.
 
 ## Stage 2 — CI Guardrail
 
+Add to `.github/workflows/repofail.yml`:
+
 ```yaml
-# .github/workflows/repofail.yml
-- run: repofail --ci
+name: repofail
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install repofail
+      - run: repofail --ci
 ```
 
-Exits 1 if HIGH rules fire. Use `--fail-on MEDIUM` to be stricter.
+Exits 1 if HIGH rules fire. **Used in CI to prevent broken merges.** Use `--fail-on MEDIUM` to be stricter.
+
+Make it inspectable: `repofail --explain <rule_id>`
+
+```bash
+$ repofail --explain spec_drift
+Rule: spec_drift
+Severity: HIGH
+Description: Spec drift means multiple Python interpreter targets are defined across:
+  • pyproject.toml (requires-python)
+  • Dockerfile (FROM python:X)
+  • CI workflows (actions/setup-python)
+When: Dockerfile pins Python X, pyproject requires Python Y — inconsistent
+Fix: Align CI, Dockerfile, and pyproject to the same Python minor.
+```
 
 ```
 repofail --ci
  Score    39%  (1 high)
- 1 deterministic incompatibility(ies) detected.
+ 1 deterministic violation detected.
  HARD FAILURES
   ● Node engine constraint violated.
  Exit code: 1
@@ -274,6 +365,8 @@ repofail is designed to run on **any machine, any repo, any scale**:
 **Graceful degradation:** On Windows, RAM detection returns `None` (GPU memory rule may skip). CUDA, compiler, Node, Rust detection use `shutil.which` and subprocess — missing tools are handled safely.
 
 **Large repos:** Scanning skips `.git`, `venv`, `node_modules`, etc. and limits Python file count. For huge monorepos, use `repofail a /path` to audit subdirs.
+
+**Try it on any repo:** `repofail /path/to/repo`. Remote URL scan (`repofail https://github.com/...`) coming soon.
 
 ## Testing
 

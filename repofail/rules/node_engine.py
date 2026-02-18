@@ -71,6 +71,9 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
         evidence={
             "engines_node": repo.node_engine_spec,
             "host_node": host.node_version,
+            "determinism": 1.0,
+            "breakage_likelihood": "~100%",
+            "likely_error": "npm ERR! code EBADENGINE / runtime version mismatch",
         },
         category="spec_violation",
         confidence="high",

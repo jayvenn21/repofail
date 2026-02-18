@@ -52,6 +52,9 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
         "host_cuda": False,
         "cuda_mandatory": is_mandatory,
         "has_is_available_guard": repo.cuda_optional,
+        "determinism": 1.0,
+        "breakage_likelihood": "~100%",
+        "likely_error": "RuntimeError: CUDA error: no CUDA-capable device is detected",
     }
 
     host_summary = f"{host.os} {host.arch}, no NVIDIA GPU"

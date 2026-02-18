@@ -19,6 +19,12 @@ RULE_INFO = {
         "when": "requires-python allows only Python 3.7 or 3.8",
         "fix": "Update to Python 3.9+ (3.10+ recommended).",
     },
+    "spec_drift": {
+        "description": "Spec drift means multiple Python interpreter targets are defined across:\n  • pyproject.toml (requires-python)\n  • Dockerfile (FROM python:X)\n  • CI workflows (actions/setup-python)",
+        "severity": "HIGH",
+        "when": "Dockerfile pins Python X, pyproject requires Python Y — inconsistent",
+        "fix": "Align CI, Dockerfile, and pyproject to the same Python minor.",
+    },
     "abi_wheel_mismatch": {
         "description": "arm64 + Python 3.12 + packages that lack wheels (bitsandbytes, xformers, etc.).",
         "severity": "HIGH",
@@ -123,6 +129,19 @@ RULE_INFO = {
     },
 }
 
+# Actionable fix commands for CLI output (HIGH rules)
+RULE_FIX_COMMANDS = {
+    "node_engine_mismatch": ["nvm install 22  # or fnm, n", "nvm use 22"],
+    "lock_file_missing": ["npm install", "git add package-lock.json"],
+    "spec_drift": ["Align CI, Dockerfile, and pyproject to the same Python minor."],
+    "python_version_mismatch": ["pyenv install <version>  # or conda", "pyenv local <version>"],
+    "torch_cuda_mismatch": ["Use CPU build, or run on a machine with NVIDIA GPU."],
+    "python_eol": ["Update to Python 3.9+ (3.10+ recommended)."],
+    "node_eol": ["nvm install 20", "nvm use 20"],
+    "abi_wheel_mismatch": ["Use Python 3.11, or install LLVM for source build."],
+    "apple_silicon_wheels": ["Use Rosetta, or run in Docker with --platform=linux/arm64."],
+}
+
 # Suggested actions per rule (for output)
 RULE_SUGGESTIONS = {
     "torch_cuda_mismatch": ["Use CPU build, or run on a machine with NVIDIA GPU"],
@@ -134,6 +153,7 @@ RULE_SUGGESTIONS = {
     "node_engine_mismatch": ["Install required Node (nvm, fnm, n)"],
     "node_eol": ["Update to Node 18+ or 20+"],
     "lock_file_missing": ["Run npm install, commit package-lock.json or yarn.lock"],
+    "spec_drift": ["Align Python versions in pyproject and Dockerfile"],
     "missing_system_libs": ["Install libgl1-mesa-glx (Linux) or ffmpeg"],
     "lora_mlx_scaling": ["Test LoRA behavior on MLX; consider CPU or CUDA for parity"],
     "torchao_incompatible": ["Pin torch>=2.2 or downgrade torchao to match torch version"],

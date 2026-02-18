@@ -9,6 +9,7 @@ from .rules import (
     torch_cuda,
     python_version,
     python_eol,
+    spec_drift,
     apple_silicon,
     native_toolchain,
     gpu_memory,
@@ -29,6 +30,8 @@ def run_rules(repo: RepoProfile, host: HostProfile) -> list[RuleResult]:
     checks = [
         torch_cuda.check,
         python_version.check,
+        python_eol.check,
+        spec_drift.check,
         abi_wheel_mismatch.check,
         apple_silicon.check,
         native_toolchain.check,
