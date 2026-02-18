@@ -70,10 +70,10 @@ Run it against any local clone.
 ## Example output
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.1/docs/screenshots/high_failure.png" width="850" alt="repofail output">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
 </p>
 
-repofail surfaces deterministic failures before install or runtime. No heuristics. No AI guesses. Evidence only.
+Deterministic spec violation detected — engines.node requires 22.x, host is 20.x.
 
 ---
 
