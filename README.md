@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=60"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=30"></a>
   <img src="https://img.shields.io/badge/ci-passing-brightgreen">
   <img src="https://img.shields.io/badge/python-3.10+-blue">
   <img src="https://img.shields.io/badge/runtime-validated-success">
