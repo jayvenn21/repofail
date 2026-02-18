@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.1/docs/logo.png" width="180" alt="repofail logo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.2/docs/logo.png" width="180" alt="repofail logo">
 </p>
 
 <h1 align="center">repofail</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=30"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=60"></a>
   <img src="https://img.shields.io/badge/ci-passing-brightgreen">
   <img src="https://img.shields.io/badge/python-3.10+-blue">
   <img src="https://img.shields.io/badge/runtime-validated-success">
@@ -70,7 +70,7 @@ Run it against any local clone.
 ## Example output
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.2/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
 </p>
 
 Deterministic spec violation detected — engines.node requires 22.x, host is 20.x.
