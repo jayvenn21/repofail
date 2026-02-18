@@ -85,19 +85,31 @@ pip install -e .
 ## Usage
 
 ```bash
+# Scan
 repofail                    # Scan current dir
 repofail -p /path/to/repo   # Scan specific repo
-repofail --json             # Machine-readable
+repofail -j                 # JSON output (machine-readable)
+repofail -m                 # Markdown output
+repofail -v                 # Verbose: rule IDs and low-confidence hints
 repofail --ci               # CI mode: exit 1 if HIGH rules fire
-```
+repofail --fail-on MEDIUM   # CI: fail on MEDIUM or higher (default: HIGH)
+repofail -r                 # Save failure report when rules fire (opt-in telemetry)
 
-```bash
-repofail gen .              # Generate env contract
-repofail check contract.json
-repofail a /path            # Audit: scan all repos in directory
-repofail sim . -H host.json # Simulate on target host
-repofail -e list            # List rules
+# Rules
+repofail -e list            # List all rules
 repofail -e spec_drift      # Explain a rule
+
+# Contracts
+repofail gen .              # Generate env contract to stdout
+repofail gen . -o contract.json
+repofail check contract.json
+
+# Fleet
+repofail a /path            # Audit: scan all repos in directory
+repofail a /path -j         # Audit with JSON output
+repofail sim . -H host.json # Simulate: would this work on target host?
+repofail s                  # Stats: local failure counts (from -r reports)
+repofail s -j               # Stats with JSON output
 ```
 
 ---
@@ -192,12 +204,6 @@ repofail/
 ```
 
 Extensible via `.repofail/rules.yaml`.
-
----
-
-repofail is designed to answer one question:
-
-**Will this repository actually run here?**
 
 ---
 
