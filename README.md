@@ -1,29 +1,70 @@
-# repofail
+<p align="center">
+  <img src="docs/assets/repofail-logo.png" width="180" alt="repofail logo">
+</p>
 
-[![Compatibility](https://img.shields.io/badge/runtime-validated-brightgreen)][repo]
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue)][repo]
-[![Rules](https://img.shields.io/badge/rules-20%2B-deterministic)][repo]
+<h1 align="center">repofail</h1>
 
-**repofail predicts why a repository will fail on your machine before you run it.**
+<p align="center">
+  Deterministic runtime compatibility analyzer
+</p>
 
-It analyzes:
+<p align="center">
+  <a href="https://github.com/jayvenn21/repofail/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/jayvenn21/repofail/repofail.yml?label=ci">
+  </a>
+  <img src="https://img.shields.io/badge/python-3.10+-blue">
+  <img src="https://img.shields.io/badge/runtime-validated-brightgreen">
+  <img src="https://img.shields.io/badge/rules-20+-deterministic">
+</p>
+
+<p align="center">
+  <strong>Predict why a repository will fail on your machine before you run it.</strong>
+</p>
+
+---
+
+## Why This Exists
+
+Most tools install dependencies.
+
+Few tools tell you:
+
+- Your Node version is wrong.
+- Docker targets the wrong architecture.
+- CUDA is hardcoded.
+- CI and local Python versions drifted.
+
+repofail reads both the repository and your machine — then shows deterministic incompatibilities before install or run.
+
+---
+
+repofail analyzes:
+
 - **The repository** — dependencies, Docker, CI, engines, lock files
 - **Your machine** — OS, architecture, toolchain, runtime versions
+- **The intersection between them**
 
-Then applies deterministic compatibility rules. No AI. No guessing. No cloud.
+Deterministic compatibility rules. No AI. No guessing. No cloud.
 
-[repo]: https://github.com/jayvenn21/repofail
+**When to run it:** After clone (before `make install`), in CI, or when debugging "works on my machine."
 
-- **Offline** — no calls home
-- **Structured** — JSON for CI and scripts
-- **Scored** — single readiness score (e.g. 85%) plus a short list of "be aware" items
-- **Extensible** — rules and contracts so you can add checks without changing core logic
+---
 
-**When to run it**
+## Try It
 
-- After clone, before `make install` / `docker compose up`
-- In CI, to fail or warn when the repo's expected environment doesn't match the runner
-- When debugging "works on my machine" — see Python/Node/Docker/RAM notes in one place
+```bash
+git clone https://github.com/Significant-Gravitas/AutoGPT
+cd AutoGPT
+repofail
+```
+
+Or scan any local repo:
+
+```bash
+repofail /path/to/any/repo
+```
+
+---
 
 ## Install
 
@@ -39,7 +80,15 @@ repofail --json             # Machine-readable
 repofail --ci               # CI (exit code from score / severity)
 ```
 
-## Example output (AutoGPT on Mac — Node 22.x required, host has v20)
+## Screenshot
+
+<p align="center">
+  <img src="docs/assets/demo-autogpt.png" width="900" alt="repofail output on AutoGPT">
+</p>
+
+---
+
+## Example output
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -63,66 +112,58 @@ repofail --ci               # CI (exit code from score / severity)
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-Clean repos get high scores with restraint — no invented problems:
-
-```
- Score    96%  (confidence: low)
- No high-confidence incompatibilities detected.
-```
-
-**Real examples:**
-- **AutoGPT** → Node 22.x required, host has v20 → 39%, HIGH
-- **browser-use** → Docker targets amd64 on Apple Silicon → 48%, HIGH
-- **chopchop** → No strong risks → 96%, low confidence
-
-**Not:** a linter, a security scanner, or a replacement for your runtime. **Is:** a deterministic runtime compatibility analyzer that shows evidence, not guesses.
+**Real examples:** AutoGPT (Node 22.x required) → 39% · browser-use (Docker amd64 on Apple Silicon) → 48% · chopchop → 96%, clean.
 
 ## Why repofail Is Different
 
-| Tool | Installs | Predicts Failure | Uses Host Inspection | CI-Enforceable |
-|------|----------|------------------|----------------------|----------------|
+| Tool | Reads Repo | Inspects Host | Predicts Failure | CI Enforceable |
+|------|------------|---------------|------------------|----------------|
 | pip | ✅ | ❌ | ❌ | ❌ |
 | Docker | ✅ | ❌ | ❌ | ❌ |
 | env diff | ❌ | ❌ | ❌ | ❌ |
-| AI assistant | ❓ | ❓ | ❌ | ❌ |
-| **repofail** | ❌ | ✅ | ✅ | ✅ |
+| AI assistant | ⚠️ | ❌ | ❓ | ❌ |
+| **repofail** | ✅ | ✅ | ✅ | ✅ |
 
-repofail creates the **runtime compatibility analysis** category — it inspects your host, reads repo contracts, and predicts breakage before install or run.
+## Design Principles
 
-## Three Demo Examples
+- **Deterministic** — not heuristic AI guesses
+- **Evidence-based** — file:line, host version, engine spec
+- **Offline by default** — no calls home
+- **Scored** — weighted compatibility risk
+- **CI-first** — exit codes are meaningful
 
-**Example 1 — CUDA** (ML Twitter will screenshot this)
+---
+
+## Demo examples
+
+**CUDA** (ML repos)
 ```
   ● Hard-coded CUDA execution path detected
   Found model.to("cuda") in trainer.py:32
-  No torch.cuda.is_available() guard
   Host has no CUDA device
-  Determinism: 1.0 (code-level execution path)
-  Breakage likelihood: ~100%
+  Determinism: 1.0
   Likely error: RuntimeError: CUDA error: no CUDA-capable device is detected
 ```
 
-**Example 2 — Apple Silicon Docker** (Mac devs love this)
+**Apple Silicon Docker**
 ```
-  ● Apple Silicon wheel likely unavailable or Docker targets amd64
+  ● Docker targets amd64, host is arm64
   Dockerfile uses --platform=linux/amd64
   Host: macOS arm64
   Determinism: 1.0
   Likely error: qemu emulation required / performance degradation
 ```
 
-**Example 3 — Node engine** (universally relatable)
+**Spec drift**
 ```
-  ● Node engine constraint violated
-  package.json requires: node 22.x
-  Host: node v20.12.2
-  Determinism: 1.0 (spec violation)
-  Likely error: npm ERR! code EBADENGINE / runtime version mismatch
+  ● Spec drift — 3 distinct Python targets across configs
+  Drift entropy: 3 distinct interpreter targets
+  CI and local runtime definitions diverge
 ```
+
+---
 
 ## Rule categories
-
-Rules are tagged for scalability and filtering:
 
 | Category | Examples |
 |----------|----------|
@@ -132,117 +173,74 @@ Rules are tagged for scalability and filtering:
 | `runtime_environment` | Port collision, Docker-only, multi-service RAM |
 | `architecture_mismatch` | Apple Silicon x86-only wheels |
 
-Output in `--json` includes `category` per result.
-
 ## Scoring model
 
 **Compatibility Score** = `100 - Σ(weight × confidence × determinism)`
 
-| Severity | Weight | Confidence | Determinism |
-|----------|--------|------------|-------------|
-| HIGH | 45 | 1.0 (high) / 0.75 (med) / 0.5 (low) | 1.0 for spec violations |
-| MEDIUM | 20 | same | 0.8–1.0 |
-| LOW | 7 | same | 0.5–1.0 |
-| INFO | 5 | same | structural only |
+| Severity | Weight | Determinism |
+|----------|--------|-------------|
+| HIGH | 45 | 1.0 for spec violations |
+| MEDIUM | 20 | 0.8–1.0 |
+| LOW | 7 | 0.5–1.0 |
+| INFO | 5 | structural only |
 
-Clamp to 10–100. **Score floors at 10%** — penalty is capped so 3 HIGH ≠ 7 HIGH (preserves nuance). When score ≤15% with HIGH rules, output shows "— fatal deterministic violations present".
+**Determinism scale:** `1.0` = guaranteed failure · `0.75` = high likelihood · `0.6` = probabilistic (spec drift) · `0.5` = structural risk
 
-Per-rule calibration: `node_engine_mismatch` 50, `lock_file_missing` 40, `spec_drift` 25×0.6. Example: 1 HIGH → 55%. 2 HIGH → 10% (fatal deterministic violations present). 3 HIGH deterministic → 0%.
-
-**Determinism scale** (per rule): `1.0` = guaranteed failure · `0.75` = high likelihood · `0.6` = probabilistic (spec drift) · `0.5` = structural risk
-
-**Confidence** (rule-driven, defensible):
-
-| Level    | Meaning                                      | Example                                  |
-|----------|----------------------------------------------|------------------------------------------|
-| **High**   | Deterministic spec violation, hardcoded mismatch | `engines.node` violates, CUDA hardcoded  |
-| **Medium** | Structural inference                         | Monorepo, multiple subprojects           |
-| **Low**    | Heuristic, incomplete signals                | Structural guess from layout             |
-
-Output in `--json` includes `confidence` and `low_confidence_rules` when relevant.
-
-## Repo name resolution
-
-`repo.name` is derived in order of preference:
-
-1. Root `pyproject.toml` `[project]` name
-2. Root `Cargo.toml` `[package]` name
-3. Directory name (folder)
-4. Root `package.json` name, unless generic (`my-*`, `template`, etc.)
-
-Generic names like `my-t3-app` are skipped so the folder name (e.g. `AutoGPT`) is used instead.
+Score floors at 10%. When score ≤15% with HIGH rules: "— fatal deterministic violations present".
 
 ## Commands
 
 | Command | What it does |
 |---------|--------------|
-| `repofail` | Scan current dir for incompatibilities |
-| `repofail .` or `repofail -p /path` | Scan a specific repo |
-| `repofail -j` | JSON output (for piping or saving host profile) |
-| `repofail -m` | Markdown output |
+| `repofail` | Scan current dir |
+| `repofail -p /path` | Scan specific repo |
+| `repofail -j` | JSON output |
 | `repofail --ci` | CI mode: exit 1 if HIGH rules fire |
-| `repofail gen [path]` | Generate env contract from repo |
-| `repofail gen . -o contract.json` | Write contract to file |
-| `repofail check <file>` | Validate current host against a contract |
-| `repofail a [path]` | Audit: scan all repos in a directory |
-| `repofail sim [path] -H <file>` | Simulate: would this repo work on target host? |
-| `repofail s` | Stats: local failure counts from opt-in reports |
+| `repofail gen .` | Generate env contract |
+| `repofail check <file>` | Validate host against contract |
+| `repofail a [path]` | Audit: scan all repos in directory |
+| `repofail sim [path] -H <file>` | Simulate on target host |
 | `repofail -e list` | List all rules |
-| `repofail -e <rule_id>` | Explain a specific rule |
-| `repofail -v` / `--verbose` | Include rule IDs and confidence hints |
-| `repofail -r` | Save failure report when rules fire (opt-in telemetry) |
+| `repofail -e spec_drift` | Explain a rule |
 
-**Sim** needs a host JSON: run `repofail -j`, save the `host` section to a file, then `repofail sim . -H that-file.json`.
-
-## Usage
-
-```bash
-repofail                    # Scan current dir
-repofail .                  # Same
-repofail -p /path/to/repo   # Scan specific repo
-repofail -j                 # JSON output
-repofail --ci               # CI mode
-repofail gen .              # Generate env contract
-repofail gen . -o contract.json
-repofail check contract.json
-repofail a .                # Audit current dir (or repofail a /path/to/repos)
-repofail sim . -H host.json # Simulate on target (create host.json from repofail -j)
-repofail -e list            # List rules
-repofail -e torch_cuda_mismatch
-repofail -r                 # Save report when rules fire
-repofail s                  # Stats
-```
-
-Run `python -m repofail.cli` if you haven't installed.
-
-## What It Does
-
-**Rules (extensible via `.repofail/rules.yaml`):**
+## What It Does — Rules
 
 | Rule | Severity | When |
 |------|----------|------|
-| **Torch CUDA mismatch** | HIGH | Hard-coded CUDA, host has no GPU |
-| **Python version violation** | HIGH | Host outside `requires-python` range |
-| **Python EOL** | HIGH | requires-python pins to 3.7 or 3.8 (EOL) |
-| **ABI wheel mismatch** | HIGH | arm64 + Python 3.12 + bitsandbytes/xformers/triton/etc — Symbol not found, build-from-source |
-| **Apple Silicon wheel mismatch** | MEDIUM/HIGH | arm64 macOS + x86-only packages, Docker amd64 |
-| **Node engine mismatch** | HIGH | package.json engines.node vs host |
-| **Node EOL** | HIGH | engines.node requires Node 14 or 16 (EOL) |
-| **Spec drift** | HIGH | pyproject vs Docker vs CI — inconsistent Python versions |
-| **Lock file missing** | HIGH | package.json has deps, no package-lock.json or yarn.lock |
-| **Native toolchain missing** | HIGH (Cargo) / MEDIUM (Node) | Native build, no compiler |
-| **Port collision** | HIGH | docker-compose port already in use |
-| **Docker-only dev** | HIGH | Dockerfile + devcontainer, no native install path |
-| **GPU memory risk** | LOW/MEDIUM | Large-model frameworks, low RAM |
-| **Node native on Windows** | MEDIUM | node-gyp on Windows |
-| **Missing system libs** | MEDIUM | libGL, ffmpeg not detected |
-| **Python minor mismatch** | INFO | Minor version drift (3.11 vs 3.12) |
-| **Multiple Python subprojects** | INFO | Monorepo with 2+ Python packages |
-| **Mixed Python + Node** | INFO | Backend + frontend in same repo |
-| **Docker vs host Python** | INFO | Dockerfile Python ≠ host |
-| **Low RAM multi-service** | INFO | Multi-service repo, &lt;16 GB RAM |
+| Torch CUDA mismatch | HIGH | Hard-coded CUDA, host has no GPU |
+| Python version violation | HIGH | Host outside `requires-python` range |
+| Python EOL | HIGH | requires-python pins to 3.7 or 3.8 |
+| Spec drift | HIGH | pyproject vs Docker vs CI — inconsistent Python |
+| Node engine mismatch | HIGH | package.json engines.node vs host |
+| Lock file missing | HIGH | package.json has deps, no lock file |
+| Apple Silicon wheel mismatch | MEDIUM/HIGH | arm64 + x86-only packages or Docker amd64 |
+| ... | | See `repofail -e list` |
 
-Each result includes **evidence** (file:line, host version, etc.) for auditability. JSON output: `results[].evidence`.
+Each result includes **evidence** (file:line, host version) for auditability.
+
+---
+
+## CI integration
+
+```yaml
+- uses: actions/checkout@v4
+- uses: actions/setup-python@v5
+  with:
+    python-version: "3.12"
+- run: pip install repofail
+- run: repofail --ci
+```
+
+Exits 1 if HIGH rules fire. Use `--fail-on MEDIUM` to be stricter.
+
+**Explain rules:** `repofail --explain spec_drift`
+
+## Fleet audit
+
+```bash
+repofail a /path/to/monorepo         # Scan all repos
+repofail sim . -H prod-host.json     # Pre-deploy: would this work on prod?
+```
 
 ## Architecture
 
@@ -250,127 +248,26 @@ Each result includes **evidence** (file:line, host version, etc.) for auditabili
 repofail/
   cli.py
   engine.py
-  contract.py
-  telemetry.py
-  models.py
-  scanner/
-    repo.py      # Repo scanning
-    host.py      # Host inspection (OS, arch, CUDA, Python, Node, Rust, compiler, RAM)
-    parsers.py
-    ast_scan.py
-  rules/
-    torch_cuda.py
-    python_version.py
-    python_eol.py
-    abi_wheel_mismatch.py
-    node_engine.py
-    node_eol.py
-    lock_file_missing.py
-    apple_silicon.py
-    native_toolchain.py
-    gpu_memory.py
-    node_windows.py
-    system_libs.py
-    yaml_loader.py   # .repofail/rules.yaml
-  fleet.py           # audit, simulate
+  scanner/         # Repo + host inspection
+  rules/           # Deterministic rule implementations
+  fleet.py         # Audit, simulate
 ```
 
-Extensible: add `.repofail/rules.yaml` or `repofail-rules.yaml` for custom rules.
+Extensible via `.repofail/rules.yaml`.
 
-## Stage 5 — Fleet / Enterprise
-
-```bash
-repofail a /path/to/monorepo         # Scan all repos
-repofail sim . -H prod-host.json     # Pre-deploy: would this work on prod?
-```
-
-Fleet-wide validation. Pre-deployment simulation against a target host profile. Export `repofail --json` and use the host section as `prod-host.json`.
-
-## Stage 4 — Failure Telemetry (opt-in, local)
-
-```bash
-repofail --report        # Save failure report when rules fire
-repofail s               # View local failure stats
-```
-
-Reports saved to `~/.repofail/reports/`. No cloud. No API. Your data stays local. Aggregates: by rule, by host (os + arch + cuda).
-
-## Stage 3 — Environment Contracts
-
-```bash
-repofail gen .           # Print contract to stdout
-repofail gen . -o repofail-contract.json
-repofail check repofail-contract.json
-```
-
-Versioned runtime expectations. Teams share contracts. CI checks drift.
-
-## Stage 2 — CI Guardrail
-
-Add to `.github/workflows/repofail.yml`:
-
-```yaml
-name: repofail
-on: [push, pull_request]
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install repofail
-      - run: repofail --ci
-```
-
-Exits 1 if HIGH rules fire. **Used in CI to prevent broken merges.** Use `--fail-on MEDIUM` to be stricter.
-
-Make it inspectable: `repofail --explain <rule_id>`
-
-```bash
-$ repofail --explain spec_drift
-Rule: spec_drift
-Severity: HIGH
-Description: Spec drift means multiple Python interpreter targets are defined across:
-  • pyproject.toml (requires-python)
-  • Dockerfile (FROM python:X)
-  • CI workflows (actions/setup-python)
-When: Dockerfile pins Python X, pyproject requires Python Y — inconsistent
-Fix: Align CI, Dockerfile, and pyproject to the same Python minor.
-```
-
-```
-repofail --ci
- Score    39%  (1 high)
- 1 deterministic violation detected.
- HARD FAILURES
-  ● Node engine constraint violated.
- Exit code: 1
-```
+---
 
 ## Runs anywhere
 
-repofail is designed to run on **any machine, any repo, any scale**:
-
 | Aspect | How |
 |--------|-----|
-| **OS** | macOS, Linux, Windows — uses `pathlib`, `platform`, no hardcoded paths |
-| **Python** | 3.10+ — standard library + typer, pyyaml, tomli |
-| **Scale** | AST scan capped at 100 Python files per repo; audit iterates dirs; no full-tree parse |
-| **Network** | Zero — runs fully offline, no API keys |
-| **Install** | `pip install -e .` or `pip install repofail` (when on PyPI) |
-| **CI** | GitHub Actions, GitLab, etc. — tested on ubuntu, macos, windows |
-
-**Graceful degradation:** On Windows, RAM detection returns `None` (GPU memory rule may skip). CUDA, compiler, Node, Rust detection use `shutil.which` and subprocess — missing tools are handled safely.
-
-**Large repos:** Scanning skips `.git`, `venv`, `node_modules`, etc. and limits Python file count. For huge monorepos, use `repofail a /path` to audit subdirs.
-
-**Try it on any repo:** `repofail /path/to/repo`. Remote URL scan (`repofail https://github.com/...`) coming soon.
+| **OS** | macOS, Linux, Windows |
+| **Python** | 3.10+ |
+| **Network** | Zero — fully offline |
+| **Install** | `pip install repofail` (when on PyPI) |
 
 ## Testing
 
 ```bash
-pip install pytest
 pytest tests/ -v
 ```
