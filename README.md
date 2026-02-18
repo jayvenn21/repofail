@@ -20,24 +20,20 @@
 </p>
 
 <p align="center">
+  <em>repofail answers one question: <strong>Will this repository actually run here?</strong><br>
+  It inspects both the repo and your machine — then reports deterministic incompatibilities before you install anything.</em>
+</p>
+
+<p align="center">
   <a href="#why-this-exists">Why</a> ·
   <a href="#example-output">Example</a> ·
+  <a href="#works-on">Works on</a> ·
   <a href="#install">Install</a> ·
   <a href="#usage">Usage</a> ·
   <a href="#rules">Rules</a> ·
   <a href="#ci-integration">CI</a> ·
   <a href="#contracts">Contracts</a>
 </p>
-
----
-
-## Example output
-
-<p align="center">
-  <img src="docs/screenshots/high_failure.png" width="850" alt="repofail output">
-</p>
-
-repofail highlights deterministic incompatibilities before install or runtime. No heuristics. No AI guesses. Evidence only.
 
 ---
 
@@ -56,6 +52,8 @@ repofail inspects both the repository and your machine — then reports determin
 
 ---
 
+## Works on
+
 repofail works on:
 
 - Python projects
@@ -65,6 +63,16 @@ repofail works on:
 - Monorepos
 
 Run it against any local clone.
+
+---
+
+## Example output
+
+<p align="center">
+  <img src="docs/screenshots/high_failure.png" width="850" alt="repofail output">
+</p>
+
+repofail surfaces deterministic failures before install or runtime. No heuristics. No AI guesses. Evidence only.
 
 ---
 
@@ -125,6 +133,17 @@ Versioned runtime expectations. Teams share contracts. CI checks drift.
 | pip | ✅ | ❌ | ❌ | ❌ |
 | Docker | ✅ | ❌ | ❌ | ❌ |
 | **repofail** | ✅ | ✅ | ✅ | ✅ |
+
+**Deterministic rule coverage** — repofail includes checks across:
+
+- **Spec violations** — version ranges, engines.node, requires-python
+- **Architecture mismatches** — Apple Silicon vs amd64 Docker
+- **Hardware constraints** — CUDA requirements, GPU memory
+- **Toolchain gaps** — missing compilers, Rust, node-gyp
+- **Runtime drift** — CI vs Docker vs local inconsistencies
+- **Environment shape** — multi-service RAM pressure, port collisions
+
+See all rules: `repofail -e list` · Explain one: `repofail -e <rule_id>`
 
 <details>
 <summary>Rule reference</summary>
