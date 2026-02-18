@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" width="180" alt="repofail logo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.1/docs/logo.png" width="180" alt="repofail logo">
 </p>
 
 <h1 align="center">repofail</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=60"></a>
   <img src="https://img.shields.io/badge/ci-passing-brightgreen">
   <img src="https://img.shields.io/badge/python-3.10+-blue">
   <img src="https://img.shields.io/badge/runtime-validated-success">
@@ -70,7 +70,7 @@ Run it against any local clone.
 ## Example output
 
 <p align="center">
-  <img src="docs/screenshots/high_failure.png" width="850" alt="repofail output">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.1/docs/screenshots/high_failure.png" width="850" alt="repofail output">
 </p>
 
 repofail surfaces deterministic failures before install or runtime. No heuristics. No AI guesses. Evidence only.
