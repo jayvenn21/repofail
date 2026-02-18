@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail"></a>
   <img src="https://img.shields.io/badge/ci-passing-brightgreen">
   <img src="https://img.shields.io/badge/python-3.10+-blue">
   <img src="https://img.shields.io/badge/runtime-validated-success">
@@ -78,7 +79,23 @@ repofail surfaces deterministic failures before install or runtime. No heuristic
 
 ## Install
 
+**From PyPI (recommended)**
+
 ```bash
+pip install repofail
+```
+
+Or with pipx (isolated CLI install):
+
+```bash
+pipx install repofail
+```
+
+**From source (development)**
+
+```bash
+git clone https://github.com/jayvenn21/repofail.git
+cd repofail
 pip install -e .
 ```
 
