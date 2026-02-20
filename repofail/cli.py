@@ -46,7 +46,7 @@ from .engine import run_rules
 from .contract import generate_contract, validate_contract, EnvironmentContract
 from .telemetry import save_report, get_stats
 from .rules.base import Severity
-from .rules.registry import RULE_INFO, RULE_SUGGESTIONS
+from .rules.registry import RULE_INFO
 from .risk import estimate_success_probability
 from .format import format_human
 

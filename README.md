@@ -129,6 +129,12 @@ repofail s                  # Stats: local failure counts (from -r reports)
 repofail s -j               # Stats with JSON output
 ```
 
+## Exit codes
+
+- **0** — No deterministic violations (or scan completed successfully)
+- **1** — Violations detected (with `--ci`) or target host has issues (with `sim`)
+- **2** — Invalid usage / bad input (e.g. not a directory, contract violation)
+
 ---
 
 ## CI integration
