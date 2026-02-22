@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.2/docs/logo.png" width="180" alt="repofail logo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/logo.png" width="180" alt="repofail logo">
 </p>
 
 <h1 align="center">repofail</h1>
@@ -9,14 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=60&cacheBust=1"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?color=orange" alt="PyPI"></a>
+  <img src="https://img.shields.io/pypi/pyversions/repofail" alt="Python">
+  <img src="https://img.shields.io/pypi/dm/repofail" alt="Downloads">
   <img src="https://img.shields.io/badge/ci-passing-brightgreen">
-  <img src="https://img.shields.io/badge/python-3.10+-blue">
   <img src="https://img.shields.io/badge/runtime-validated-success">
   <img src="https://img.shields.io/badge/rules-20+-informational">
 </p>
 
 <p align="center">
+  <strong>The static analyzer for runtime compatibility.</strong><br>
   Predict why a repository will fail on your machine before you run it.
 </p>
 
@@ -33,8 +35,21 @@
   <a href="#usage">Usage</a> ·
   <a href="#rules">Rules</a> ·
   <a href="#ci-integration">CI</a> ·
-  <a href="#contracts">Contracts</a>
+  <a href="#contracts">Contracts</a> ·
+  <a href="#faq">FAQ</a>
 </p>
+
+---
+
+## Quickstart (30 seconds)
+
+```bash
+pip install repofail
+cd /path/to/any/repo
+repofail
+```
+
+You get a compatibility score and a list of deterministic blockers (Node version, Python range, CUDA, lock file, spec drift, etc.). No install of the repo’s dependencies. No cloud. No AI.
 
 ---
 
@@ -70,10 +85,22 @@ Run it against any local clone.
 ## Example output
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/v0.2.2/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
 </p>
 
 Deterministic spec violation detected — engines.node requires 22.x, host is 20.x.
+
+---
+
+## Case studies
+
+| Scenario | Without repofail | With repofail |
+|----------|------------------|----------------|
+| **Node engine mismatch** | Clone → `npm install` → `EBADENGINE` → search, fix, retry | `repofail .` → "Node 22.x required, host is 20.x" + suggested fix in &lt;1s |
+| **CUDA on laptop** | Clone → `pip install` → run → `RuntimeError: CUDA unavailable` | `repofail .` → "Hard-coded CUDA path, host has no GPU" before you run |
+| **Spec drift (Python)** | CI passes, local fails; pyproject says 3.11, Docker uses 3.9 | `repofail .` → "Spec drift — 3 distinct Python targets" + where they differ |
+
+Try the demos: [node engine](https://github.com/jayvenn21/repofail-demo-node-engine), [spec drift](https://github.com/jayvenn21/repofail-demo-spec-drift), [CUDA hardcoded](https://github.com/jayvenn21/repofail-demo-cuda-hardcoded).
 
 ---
 
@@ -85,10 +112,23 @@ Deterministic spec violation detected — engines.node requires 22.x, host is 20
 pip install repofail
 ```
 
-Or with pipx (isolated CLI install):
+**One-liner (curl)**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/jayvenn21/repofail/main/install.sh | bash
+```
+
+**pipx (isolated CLI)**
 
 ```bash
 pipx install repofail
+```
+
+**Homebrew** (formula: [jayvenn21/homebrew-tap](https://github.com/jayvenn21/homebrew-tap))
+
+```bash
+brew tap jayvenn21/tap
+brew install jayvenn21/tap/repofail
 ```
 
 **From source (development)**
@@ -139,6 +179,31 @@ repofail s -j               # Stats with JSON output
 
 ## CI integration
 
+**Option A — Reusable action (comment on PR + fail CI)**
+
+```yaml
+name: repofail
+on:
+  pull_request:
+    branches: [main, master]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jayvenn21/repofail/.github/actions/repofail@main
+        with:
+          path: .
+          fail_on: HIGH
+          comment: 'true'
+          upload_artifact: 'true'
+          pr_number: ${{ github.event.pull_request.number }}
+```
+
+The action installs repofail, runs a compatibility check, comments the Markdown report on the PR, uploads the JSON artifact, and fails the job if violations meet the threshold.
+
+**Option B — Inline (no comment)**
+
 ```yaml
 - uses: actions/checkout@v4
 - uses: actions/setup-python@v5
@@ -157,7 +222,7 @@ repofail gen . -o contract.json
 repofail check contract.json
 ```
 
-Versioned runtime expectations. Teams share contracts. CI checks drift.
+Versioned runtime expectations. Teams share contracts. CI checks drift. Generated contracts report the installed repofail version (from PyPI/Homebrew) so tooling stays traceable.
 
 ---
 
@@ -230,8 +295,39 @@ Extensible via `.repofail/rules.yaml`.
 
 ---
 
+## FAQ
+
+**Does repofail install or run my project?**  
+No. It only reads configs and (optionally) inspects Python/JS for patterns. No `pip install`, no `npm install`, no execution.
+
+**Does it need the internet?**  
+No. It runs fully offline. Host inspection uses local subprocesses (e.g. `node --version`).
+
+**Why “deterministic”?**  
+Same repo + same host → same result. No ML, no heuristics that change between runs. Rules are based on config and code.
+
+**Can I add my own rules?**  
+Yes. Put a `.repofail/rules.yaml` (or `repofail-rules.yaml`) in the repo and define conditions on `repo.*` and `host.*`. See `repofail -e list` for built-in rule IDs.
+
+**What if my repo is clean?**  
+You get a high score (e.g. 96–100%) and “No deterministic blockers detected.” repofail does not invent problems.
+
+---
+
+## When not to use it
+
+- **You need dependency resolution** — use pip, npm, poetry, etc. repofail does not install or resolve.
+- **You need security scanning** — use Dependabot, Snyk, or similar. repofail is compatibility-only.
+- **You want “AI suggested fixes”** — repofail gives deterministic, rule-based suggestions only.
+- **You run only in one environment** — if every dev and CI use the same OS/runtime, the value is smaller (still useful for drift and contracts).
+
+---
+
 ## Testing
 
 ```bash
+pip install -e ".[dev]"
 pytest tests/ -v
 ```
+
+**Quick checks:** `bash -n install.sh` (syntax). The GitHub Action runs on every PR in this repo (see [.github/workflows/repofail.yml](.github/workflows/repofail.yml)); to test the reusable action, use it in another repo’s workflow on a PR.

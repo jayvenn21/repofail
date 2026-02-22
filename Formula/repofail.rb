@@ -12,8 +12,8 @@ class Repofail < Formula
 
   desc "Deterministic runtime compatibility analyzer"
   homepage "https://github.com/jayvenn21/repofail"
-  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.3.tar.gz"
-  sha256 "1a9b36de3c50bcefbe5af716d2afdd253fca568aaec900d97840c1fe718c0b6c"
+  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.4.tar.gz"
+  sha256 "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
   license "MIT"
 
   # App supports Python 3.10+. We use 3.12 for current Homebrew; change to

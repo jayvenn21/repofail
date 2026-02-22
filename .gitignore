@@ -4,5 +4,17 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .eggs/
+.venv/
+venv/
 VISION.md
 repofail-contract.json
+
+# Sensitive / local-only (never commit)
+.env
+.env.local
+.env.*.local
+.secrets
+secrets.yaml
+.credentials
+*.pem
+.DS_Store
