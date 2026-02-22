@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 import typer
@@ -263,7 +264,7 @@ def _print_json(repo_profile, host_profile, results, verbose: bool = False) -> N
 @app.command("gen")
 def gen_cmd(
     path: Path = typer.Argument(Path("."), exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Repo path"),
-    output: Path | None = typer.Option(None, "-o", help="Output file"),
+    output: Optional[Path] = typer.Option(None, "-o", help="Output file"),
 ) -> None:
     """Generate an environment contract from the repository."""
     try:
