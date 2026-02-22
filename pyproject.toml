@@ -14,6 +14,13 @@ dependencies = [
     "tomli>=2.0; python_version < '3.11'",
     "pyyaml>=6.0",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 
 [project.scripts]
 repofail = "repofail.cli:_main"
@@ -22,4 +29,7 @@ repofail = "repofail.cli:_main"
 dev = [
     "pytest>=7.0",
 ]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".venv-check", ".venv-check/**", "testenv", "testenv/**", ".venv", ".venv/**", "venv", "venv/**"]
 

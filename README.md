@@ -9,12 +9,12 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?color=orange" alt="PyPI"></a>
-  <img src="https://img.shields.io/pypi/pyversions/repofail" alt="Python">
-  <img src="https://img.shields.io/pypi/dm/repofail" alt="Downloads">
-  <img src="https://img.shields.io/badge/ci-passing-brightgreen">
-  <img src="https://img.shields.io/badge/runtime-validated-success">
-  <img src="https://img.shields.io/badge/rules-20+-informational">
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail" alt="PyPI"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/pyversions/repofail" alt="Python"></a>
+  <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/dm/repofail" alt="Downloads"></a>
+  <a href="https://github.com/jayvenn21/repofail/actions"><img src="https://img.shields.io/github/actions/workflow/status/jayvenn21/repofail/repofail.yml?branch=main" alt="CI"></a>
+  <img src="https://img.shields.io/badge/runtime-validated-brightgreen" alt="Runtime">
+  <img src="https://img.shields.io/badge/rules-20%2B-blue" alt="Rules">
 </p>
 
 <p align="center">
