@@ -1,18 +1,19 @@
 # Homebrew formula for repofail
 # To use: copy to your tap repo (e.g. homebrew-tap/Formula/repofail.rb)
-# Then: brew tap jayvenn21/tap && brew install repofail
-# Or: brew install --formula Formula/repofail.rb (from this repo)
+# Then: brew tap jayvenn21/tap && brew install jayvenn21/tap/repofail
 #
 # Homebrew uses --no-deps when installing the main package, so all Python
 # dependencies must be declared as resources below.
+# If SHA256 fails after pushing a new tag, get the correct hash with:
+#   curl -sL https://github.com/jayvenn21/repofail/archive/refs/tags/vX.Y.Z.tar.gz | shasum -a 256
 
 class Repofail < Formula
   include Language::Python::Virtualenv
 
   desc "Deterministic runtime compatibility analyzer"
   homepage "https://github.com/jayvenn21/repofail"
-  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.2.tar.gz"
-  sha256 "331055c40ec70a9ffb4f14f801bddf519014aaff1db1e5c0955b2f35e46da219"
+  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.3.tar.gz"
+  sha256 "1a9b36de3c50bcefbe5af716d2afdd253fca568aaec900d97840c1fe718c0b6c"
   license "MIT"
 
   # App supports Python 3.10+. We use 3.12 for current Homebrew; change to
