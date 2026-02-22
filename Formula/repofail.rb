@@ -12,7 +12,8 @@ class Repofail < Formula
 
   desc "Deterministic runtime compatibility analyzer"
   homepage "https://github.com/jayvenn21/repofail"
-  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.4.tar.gz"
+  url "https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.5.tar.gz"
+  # Replace with v0.2.5 tarball SHA after tagging: curl -sL https://github.com/jayvenn21/repofail/archive/refs/tags/v0.2.5.tar.gz | shasum -a 256
   sha256 "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
   license "MIT"
 
