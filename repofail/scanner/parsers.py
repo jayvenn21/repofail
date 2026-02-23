@@ -255,13 +255,27 @@ def parse_cargo_toml(path: Path) -> dict[str, Any]:
 
 def parse_dockerfile(path: Path) -> dict[str, Any]:
     """Parse Dockerfile for base image, platform, Python."""
-    result: dict[str, Any] = {"has_cuda": False, "python_version": None, "platform_amd64": False}
+    result: dict[str, Any] = {
+        "has_cuda": False,
+        "python_version": None,
+        "platform_amd64": False,
+        "base_image": None,
+    }
     if not path.exists():
         return result
 
     content = path.read_text(errors="replace")
     result["has_cuda"] = "cuda" in content.lower() or "nvidia" in content.lower()
     for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.upper().startswith("FROM "):
+            # FROM image[:tag] [AS name]; skip --platform= and ARG
+            rest = stripped[5:].strip()
+            if rest and not result.get("base_image"):
+                base = rest.split()[0] if rest.split() else rest
+                if "AS " in base.upper():
+                    base = base.upper().split(" AS ")[0].strip()
+                result["base_image"] = base
         if "python:" in line.lower() or "python=" in line.lower():
             m = re.search(r"python[:\s]*([\d.]+)", line, re.I)
             if m:

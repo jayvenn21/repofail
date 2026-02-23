@@ -1,5 +1,6 @@
 """CLI entry point — scan repo, run rules, output clearly."""
 
+import json
 import sys
 from pathlib import Path
 from typing import Optional
@@ -13,7 +14,7 @@ def _err(msg: str) -> None:
     raise click.BadParameter(msg)
 
 # Subcommands (short names so "repofail gen" works)
-_SUBCOMMANDS = {"gen", "s", "a", "sim", "check"}
+_SUBCOMMANDS = {"gen", "s", "a", "sim", "check", "lock", "verify", "fleet"}
 
 
 def _preprocess_argv():
@@ -45,13 +46,58 @@ def _preprocess_argv():
 from .scanner import scan_repo, inspect_host
 from .engine import run_rules
 from .contract import generate_contract, validate_contract, EnvironmentContract
+from .lock import generate_lock, verify_lock, LOCK_FILENAME
 from .telemetry import save_report, get_stats
+from .fleet import audit, fleet_scan
 from .rules.base import Severity
 from .rules.registry import RULE_INFO
 from .risk import estimate_success_probability
 from .format import format_human
 
 app = typer.Typer(help="Predict why a repository will fail on your machine.")
+
+fleet_app = typer.Typer(help="Fleet-wide compliance and scanning.")
+
+
+@fleet_app.command("scan")
+def fleet_scan_cmd(
+    path: Path = typer.Argument(Path("."), exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Root dir to scan (e.g. ~/org)"),
+    policy: Optional[Path] = typer.Option(None, "--policy", "-P", path_type=Path, help="Policy YAML (fail_on, max_repos, max_depth)"),
+    json_out: bool = typer.Option(False, "--json", "-j", help="Output JSON"),
+) -> None:
+    """Scan all repos under path; report violations, most common drift, risk clusters."""
+    if not path.exists() or not path.is_dir():
+        _err(f"Directory not found: {path}")
+    summary = fleet_scan(path, policy_path=policy)
+    if json_out:
+        typer.echo(json.dumps(summary, indent=2))
+        if summary.get("violations", 0) > 0 and summary.get("policy", {}).get("fail_on") == "HIGH":
+            high_count = sum(1 for r in summary.get("repos", []) if r.get("has_high"))
+            if high_count > 0:
+                raise typer.Exit(1)
+        return
+    total = summary["total_repos_scanned"]
+    violations = summary["violations"]
+    typer.echo(f"Total repos scanned: {total}")
+    typer.echo(f"Violations: {violations}")
+    drift = summary.get("most_common_drift") or {}
+    if drift:
+        typer.echo("Most common drift:")
+        for rule_id, count in list(drift.items())[:8]:
+            typer.echo(f"  {rule_id}: {count}")
+    clusters = summary.get("risk_clusters") or []
+    if clusters:
+        typer.echo("Risk cluster:")
+        for c in clusters[:6]:
+            typer.echo(f"  {c['category']}: {c['count']} finding(s)")
+    if summary.get("policy", {}).get("fail_on") == "HIGH":
+        high_count = sum(1 for r in summary.get("repos", []) if r.get("has_high"))
+        if high_count > 0:
+            typer.echo(f"\n{high_count} repo(s) with HIGH severity (policy fail_on=HIGH).", err=True)
+            raise typer.Exit(1)
+
+
+app.add_typer(fleet_app, name="fleet")
 
 
 @app.callback(invoke_without_command=True)
@@ -310,7 +356,6 @@ def audit_cmd(
     json_out: bool = typer.Option(False, "-j", help="JSON output"),
 ) -> None:
     """Scan all repos in directory — fleet-wide compatibility check."""
-    from .fleet import audit
     if not path.exists() or not path.is_dir():
         _err(f"Directory not found: {path}\nUse a path that exists, e.g. repofail a .")
     results = audit(path)
@@ -358,6 +403,38 @@ def sim_cmd(
     typer.echo(f"{len(results)} issue(s) on target host:")
     for r in results:
         typer.echo(f"  [{r.severity.value}] {r.rule_id}: {r.message}")
+    raise typer.Exit(1)
+
+
+@app.command("lock")
+def lock_cmd(
+    path: Path = typer.Option(Path("."), "--path", "-p", exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Repo path"),
+    output: Optional[Path] = typer.Option(None, "-o", help="Output file (default: repofail.lock.json in repo)"),
+) -> None:
+    """Generate repofail.lock.json from current host (and repo Dockerfile base). CI can then use repofail verify."""
+    try:
+        lock = generate_lock(path)
+    except NotADirectoryError as e:
+        _err(str(e))
+    out = output or path / LOCK_FILENAME
+    out.write_text(json.dumps(lock, indent=2))
+    typer.echo(f"Wrote {out}", err=True)
+
+
+@app.command("verify")
+def verify_cmd(
+    path: Path = typer.Option(Path("."), "--path", "-p", exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Repo path"),
+    lock_file: Optional[Path] = typer.Option(None, "-f", help="Lock file path (default: repofail.lock.json in repo)"),
+) -> None:
+    """Verify current host matches repofail.lock.json. Exit 1 on drift (for CI)."""
+    lock_path = lock_file or path / LOCK_FILENAME
+    failures = verify_lock(lock_path)
+    if not failures:
+        typer.echo("OK: Host matches lock.")
+        return
+    typer.echo("Runtime drift detected:", err=True)
+    for field, expected, actual in failures:
+        typer.echo(f"  {field}: expected {expected}, host {actual}", err=True)
     raise typer.Exit(1)
 
 

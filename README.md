@@ -214,6 +214,27 @@ The action installs repofail, runs a compatibility check, comments the Markdown 
 
 Exits 1 if HIGH rules fire. Use `--fail-on MEDIUM` to be stricter.
 
+**Option C — Lock + verify (enforcement)**
+
+Pin the runtime once, then fail CI on drift:
+
+```bash
+repofail lock          # generates repofail.lock.json (python, node, arch, os, cuda, docker_base)
+repofail verify        # exit 1 if host doesn't match lock
+```
+
+Commit `repofail.lock.json`. In CI, run `repofail verify` so builds only pass on the locked environment.
+
+**Fleet compliance**
+
+Scan many repos and get violations, most common drift, and risk clusters:
+
+```bash
+repofail fleet scan ~/org --policy org.policy.yaml
+```
+
+Policy YAML (optional): `fail_on: HIGH`, `max_repos: 500`, `max_depth: 4`. With `fail_on: HIGH`, exit code is 1 if any repo has a HIGH finding.
+
 ## Contracts
 
 ```bash
