@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" width="65%" alt="repofail logo">
+  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/logo.png" width="65%" alt="repofail logo">
 </p>
 
 <p align="center">
@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/v/repofail?cacheSeconds=60" alt="PyPI"></a>
+  <a href="https://github.com/jayvenn21/repofail/releases"><img src="https://img.shields.io/github/v/release/jayvenn21/repofail" alt="GitHub release"></a>
   <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/pyversions/repofail?cacheSeconds=60" alt="Python"></a>
   <a href="https://pypi.org/project/repofail/"><img src="https://img.shields.io/pypi/dm/repofail?cacheSeconds=60" alt="Downloads"></a>
   <a href="https://github.com/jayvenn21/repofail/actions"><img src="https://img.shields.io/github/actions/workflow/status/jayvenn21/repofail/repofail.yml?branch=main" alt="CI"></a>
