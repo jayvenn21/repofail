@@ -15,6 +15,7 @@
   <a href="https://github.com/jayvenn21/repofail/actions"><img src="https://img.shields.io/github/actions/workflow/status/jayvenn21/repofail/repofail.yml?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/runtime-validated-brightgreen" alt="Runtime">
   <img src="https://img.shields.io/badge/rules-20%2B-blue" alt="Rules">
+  <a href="https://github.com/jayvenn21/repofail/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License"></a>
 </p>
 
 <p align="center">
@@ -331,3 +332,9 @@ pytest tests/ -v
 ```
 
 **Quick checks:** `bash -n install.sh` (syntax). The GitHub Action runs on every PR in this repo (see [.github/workflows/repofail.yml](.github/workflows/repofail.yml)); to test the reusable action, use it in another repo’s workflow on a PR.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
