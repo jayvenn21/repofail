@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/logo.png" width="180" alt="repofail logo">
+  <img src="docs/logo.png" width="65%" alt="repofail logo">
 </p>
-
-<h1 align="center">repofail</h1>
 
 <p align="center">
   Deterministic runtime compatibility analyzer
