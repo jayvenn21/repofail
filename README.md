@@ -23,7 +23,7 @@
 
 <p align="center">
   <em>repofail answers one question: <strong>Will this repository actually run here?</strong><br>
-  It inspects both the repo and your machine — then reports deterministic incompatibilities before you install anything.</em>
+  It inspects both the repo and your machine - then reports deterministic incompatibilities before you install anything.</em>
 </p>
 
 <p align="center">
@@ -63,19 +63,19 @@ Few tools tell you:
 - CUDA is hard-coded with no fallback.
 - CI and local Python versions drifted.
 
-repofail inspects both the repository and your machine — then reports deterministic incompatibilities before install or runtime.
+repofail inspects both the repository and your machine - then reports deterministic incompatibilities before install or runtime.
 
 ---
 
 ## Works on
 
-repofail works on:
-
-- Python projects
-- Node projects
-- Dockerized repos
-- ML repositories
-- Monorepos
+- **Python** - requires-python, PyTorch/CUDA, ABI wheels, spec drift
+- **Node** - engines.node, native modules, lock files, EOL
+- **Go** - go.mod version, CGO dependencies, OS build tags
+- **Rust** - rust-version, system lib crates, target-specific deps
+- **Docker** - base image, platform mismatch, CUDA
+- **ML** - CUDA hard-coding, GPU memory, Apple Silicon wheels
+- **Monorepos** - multi-language, subproject detection
 
 Run it against any local clone.
 
@@ -87,7 +87,7 @@ Run it against any local clone.
   <img src="https://raw.githubusercontent.com/jayvenn21/repofail/main/docs/screenshots/nodefail.gif" width="850" alt="Node engine mismatch demo">
 </p>
 
-Deterministic spec violation detected — engines.node requires 22.x, host is 20.x.
+Deterministic spec violation detected - engines.node requires 22.x, host is 20.x.
 
 ---
 
@@ -97,7 +97,7 @@ Deterministic spec violation detected — engines.node requires 22.x, host is 20
 |----------|------------------|----------------|
 | **Node engine mismatch** | Clone → `npm install` → `EBADENGINE` → search, fix, retry | `repofail .` → "Node 22.x required, host is 20.x" + suggested fix in &lt;1s |
 | **CUDA on laptop** | Clone → `pip install` → run → `RuntimeError: CUDA unavailable` | `repofail .` → "Hard-coded CUDA path, host has no GPU" before you run |
-| **Spec drift (Python)** | CI passes, local fails; pyproject says 3.11, Docker uses 3.9 | `repofail .` → "Spec drift — 3 distinct Python targets" + where they differ |
+| **Spec drift (Python)** | CI passes, local fails; pyproject says 3.11, Docker uses 3.9 | `repofail .` → "Spec drift - 3 distinct Python targets" + where they differ |
 
 Try the demos: [node engine](https://github.com/jayvenn21/repofail-demo-node-engine), [spec drift](https://github.com/jayvenn21/repofail-demo-spec-drift), [CUDA hardcoded](https://github.com/jayvenn21/repofail-demo-cuda-hardcoded).
 
@@ -151,6 +151,15 @@ repofail --ci               # CI mode: exit 1 if HIGH rules fire
 repofail --fail-on MEDIUM   # CI: fail on MEDIUM or higher (default: HIGH)
 repofail -r                 # Save failure report when rules fire (opt-in telemetry)
 
+# AI-powered explanations (requires REPOFAIL_API_KEY or Ollama)
+repofail . --ai             # Plain English explanation + fix suggestions
+repofail . --ai --model ollama/llama3   # Use local model (no data leaves your machine)
+repofail . --ai --model claude-sonnet-4-20250514  # Use Anthropic
+
+# Init
+repofail init               # Interactive config generator
+repofail init --yes         # Non-interactive (defaults)
+
 # Rules
 repofail -e list            # List all rules
 repofail -e spec_drift      # Explain a rule
@@ -170,15 +179,15 @@ repofail s -j               # Stats with JSON output
 
 ## Exit codes
 
-- **0** — No deterministic violations (or scan completed successfully)
-- **1** — Violations detected (with `--ci`) or target host has issues (with `sim`)
-- **2** — Invalid usage / bad input (e.g. not a directory, contract violation)
+- **0** - No deterministic violations (or scan completed successfully)
+- **1** - Violations detected (with `--ci`) or target host has issues (with `sim`)
+- **2** - Invalid usage / bad input (e.g. not a directory, contract violation)
 
 ---
 
 ## CI integration
 
-**Option A — Reusable action (comment on PR + fail CI)**
+**Option A - Reusable action (comment on PR + fail CI)**
 
 ```yaml
 name: repofail
@@ -201,7 +210,7 @@ jobs:
 
 The action installs repofail, runs a compatibility check, comments the Markdown report on the PR, uploads the JSON artifact, and fails the job if violations meet the threshold.
 
-**Option B — Inline (no comment)**
+**Option B - Inline (no comment)**
 
 ```yaml
 - uses: actions/checkout@v4
@@ -214,7 +223,7 @@ The action installs repofail, runs a compatibility check, comments the Markdown 
 
 Exits 1 if HIGH rules fire. Use `--fail-on MEDIUM` to be stricter.
 
-**Option C — Lock + verify (enforcement)**
+**Option C - Lock + verify (enforcement)**
 
 Pin the runtime once, then fail CI on drift:
 
@@ -230,10 +239,29 @@ Commit `repofail.lock.json`. In CI, run `repofail verify` so builds only pass on
 Scan many repos and get violations, most common drift, and risk clusters:
 
 ```bash
-repofail fleet scan ~/org --policy org.policy.yaml
+repofail fleet ~/org --policy org.policy.yaml
 ```
 
 Policy YAML (optional): `fail_on: HIGH`, `max_repos: 500`, `max_depth: 4`. With `fail_on: HIGH`, exit code is 1 if any repo has a HIGH finding.
+
+**Option D - GitHub App (zero config)**
+
+Install the [repofail GitHub App](github-app/) on your repos and every PR gets an automatic compatibility comment - no workflow file needed.
+
+```
+## repofail · compatibility report
+
+Compatibility score: 🔴 ███░░░░░░░ 32%
+
+### Hard failures
+❌ Hard-coded CUDA path, host has no GPU.
+   Likely error: RuntimeError: CUDA unavailable
+
+### Runtime risks
+⚠️ Spec drift - 3 distinct Python targets across configs.
+```
+
+Self-host with Docker or Railway. See [`github-app/README.md`](github-app/README.md) for setup.
 
 ## Contracts
 
@@ -246,6 +274,51 @@ Versioned runtime expectations. Teams share contracts. CI checks drift. Generate
 
 ---
 
+## AI-powered explanations
+
+repofail is deterministic by default - fast AST rules, no hallucination. The `--ai` flag layers plain English explanations on top of the scan results using your own API key or a local model.
+
+```bash
+pip install repofail[ai]  # installs litellm
+
+# Set your key (OpenAI, Anthropic, or skip for Ollama)
+export REPOFAIL_API_KEY=sk-...
+
+# Scan with AI explanation
+repofail . --ai
+```
+
+**What the AI does:**
+- Translates each finding into plain English a beginner can understand
+- Explains what error you'll actually see if you try to run the repo
+- Suggests specific fixes (commands, config changes, code edits)
+- Gives an overall "will this work on my machine?" verdict
+
+**What the AI does NOT do:**
+- It never decides whether there's a problem - that's the deterministic scanner
+- It never sees your source code - only the structured scan results (a few KB of JSON)
+- Zero false positives from detection - the rules are the source of truth
+
+**Supported providers:**
+
+| Provider | Model example | Cost per scan | Setup |
+|----------|--------------|---------------|-------|
+| OpenAI | `gpt-4o-mini` (default) | ~$0.001 | `REPOFAIL_API_KEY=sk-...` |
+| Anthropic | `claude-sonnet-4-20250514` | ~$0.001 | `REPOFAIL_API_KEY=sk-ant-...` |
+| Ollama | `ollama/llama3` | $0.00 | No key needed, runs locally |
+
+```bash
+# Use a specific model
+repofail . --ai --model claude-sonnet-4-20250514
+
+# Fully local - no data leaves your machine
+repofail . --ai --model ollama/llama3
+```
+
+> repofail works fully offline by default. The `--ai` flag adds AI-powered explanations using your own API key (OpenAI, Anthropic) or a local model via Ollama. No data is sent anywhere unless you opt in.
+
+---
+
 ## Rules
 
 | Tool | Reads Repo | Inspects Host | Predicts Failure | CI Enforceable |
@@ -254,14 +327,14 @@ Versioned runtime expectations. Teams share contracts. CI checks drift. Generate
 | Docker | ✅ | ❌ | ❌ | ❌ |
 | **repofail** | ✅ | ✅ | ✅ | ✅ |
 
-**Deterministic rule coverage** — repofail includes checks across:
+**Deterministic rule coverage** - repofail includes checks across:
 
-- **Spec violations** — version ranges, engines.node, requires-python
-- **Architecture mismatches** — Apple Silicon vs amd64 Docker
-- **Hardware constraints** — CUDA requirements, GPU memory
-- **Toolchain gaps** — missing compilers, Rust, node-gyp
-- **Runtime drift** — CI vs Docker vs local inconsistencies
-- **Environment shape** — multi-service RAM pressure, port collisions
+- **Spec violations** - Python requires-python, Node engines.node, Go go.mod, Rust rust-version
+- **Architecture mismatches** - Apple Silicon vs amd64 Docker, Go/Rust OS build tags
+- **Hardware constraints** - CUDA requirements, GPU memory
+- **Toolchain gaps** - missing compilers, CGO, Rust system crates, node-gyp
+- **Runtime drift** - CI vs Docker vs local inconsistencies
+- **Environment shape** - multi-service RAM pressure, port collisions
 
 See all rules: `repofail -e list` · Explain one: `repofail -e <rule_id>`
 
@@ -272,9 +345,14 @@ See all rules: `repofail -e list` · Explain one: `repofail -e <rule_id>`
 |------|----------|------|
 | Torch CUDA mismatch | HIGH | Hard-coded CUDA, host has no GPU |
 | Python version violation | HIGH | Host outside `requires-python` range |
-| Spec drift | HIGH | pyproject vs Docker vs CI — inconsistent Python |
+| Go version mismatch | HIGH | go.mod go directive > host Go |
+| Rust version mismatch | HIGH | Cargo.toml rust-version > host rustc |
+| Spec drift | HIGH | pyproject vs Docker vs CI - inconsistent Python |
 | Node engine mismatch | HIGH | package.json engines.node vs host |
 | Lock file missing | HIGH | package.json has deps, no lock file |
+| Go CGO no compiler | MEDIUM | CGO deps but no gcc/clang |
+| Go OS build tags | MEDIUM | Build tags exclude current host OS |
+| Rust target platform | MEDIUM | Target-specific deps for a different OS |
 | Apple Silicon wheel mismatch | MEDIUM/HIGH | arm64 + x86-only packages or Docker amd64 |
 | … | | `repofail -e list` |
 
@@ -294,7 +372,7 @@ See all rules: `repofail -e list` · Explain one: `repofail -e <rule_id>`
 
 **Determinism scale:** `1.0` = guaranteed failure · `0.75` = high likelihood · `0.6` = probabilistic (spec drift) · `0.5` = structural risk
 
-Score floors at 10%. When score ≤15% with HIGH rules: "— fatal deterministic violations present".
+Score floors at 10%. When score ≤15% with HIGH rules: "- fatal deterministic violations present".
 
 </details>
 
@@ -304,14 +382,16 @@ Score floors at 10%. When score ≤15% with HIGH rules: "— fatal deterministic
 
 ```
 repofail/
-  cli.py
-  engine.py
-  scanner/         # Repo + host inspection
+  cli.py           # Typer CLI (scan, init, lock, verify, fleet, gen, check, sim)
+  engine.py        # Rule runner
+  init.py          # Interactive config generator
+  scanner/         # Repo + host inspection (Python, Node, Go, Rust, Docker)
   rules/           # Deterministic rule implementations
-  fleet.py         # Audit, simulate
+  lock.py          # Runtime lock / verify
+  fleet.py         # Audit, simulate, fleet scan
 ```
 
-Extensible via `.repofail/rules.yaml`.
+Extensible via `.repofail/rules.yaml` or `.repofail.yaml` (generated by `repofail init`).
 
 ---
 
@@ -334,12 +414,42 @@ You get a high score (e.g. 96–100%) and “No deterministic blockers detected.
 
 ---
 
+## How repofail is different
+
+| Tool | What it answers | Overlap |
+|------|----------------|---------|
+| **CodeRabbit / Greptile** | "Is this PR good code?" (LLM review) | None - code quality, not runtime |
+| **CodeQL / Snyk** | "Does this code have vulnerabilities?" | None - security, not compatibility |
+| **pip / npm / Docker** | "Install these deps" | Finds problems *after* you hit the error |
+| **go-runtime-compat** | "Will this Go code fail in a container?" | Go only |
+| **repofail** | "Will this repo fail on **this machine** before you run it?" | **Cross-language, pre-execution, deterministic** |
+
+repofail is the only tool that combines **repo scanning + host inspection + failure prediction** across Python, Node, Go, Rust, Docker, and CUDA - before you run anything.
+
+---
+
+## Roadmap
+
+- [x] Python / Node / Docker / CUDA scanning
+- [x] Go scanner (go.mod, CGO, build tags)
+- [x] Rust scanner (rust-version, target platforms, system crates)
+- [x] `repofail init` - interactive config generator
+- [x] Runtime lock enforcement (`repofail lock` / `verify`)
+- [x] Fleet compliance mode (`repofail fleet`)
+- [x] AI-powered explanations (`--ai` flag, BYOK, Ollama support)
+- [x] GitHub App - auto-comment on PRs with environment-specific warnings
+- [ ] Java scanner (JNI, JVM version, native bindings)
+- [ ] Web dashboard - paste a GitHub URL, get a report
+- [ ] Community rule marketplace (`repofail-community-rules`)
+
+---
+
 ## When not to use it
 
-- **You need dependency resolution** — use pip, npm, poetry, etc. repofail does not install or resolve.
-- **You need security scanning** — use Dependabot, Snyk, or similar. repofail is compatibility-only.
-- **You want “AI suggested fixes”** — repofail gives deterministic, rule-based suggestions only.
-- **You run only in one environment** — if every dev and CI use the same OS/runtime, the value is smaller (still useful for drift and contracts).
+- **You need dependency resolution** - use pip, npm, poetry, etc. repofail does not install or resolve.
+- **You need security scanning** - use Dependabot, Snyk, or similar. repofail is compatibility-only.
+- **You want “AI suggested fixes”** - repofail gives deterministic, rule-based suggestions only.
+- **You run only in one environment** - if every dev and CI use the same OS/runtime, the value is smaller (still useful for drift and contracts).
 
 ---
 
@@ -356,4 +466,4 @@ pytest tests/ -v
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).

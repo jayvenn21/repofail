@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "repofail"
-version = "0.3.0"
+version = "0.4.0"
 description = "Predict why a repository will fail on your machine before you run it."
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
@@ -27,10 +27,13 @@ classifiers = [
 repofail = "repofail.cli:_main"
 
 [project.optional-dependencies]
+ai = [
+    "litellm>=1.0",
+]
 dev = [
     "pytest>=7.0",
 ]
 
 [tool.hatch.build.targets.sdist]
-exclude = [".venv-check", ".venv-check/**", "testenv", "testenv/**", ".venv", ".venv/**", "venv", "venv/**"]
+exclude = [".venv-check", ".venv-check/**", "testenv", "testenv/**", ".venv", ".venv/**", "venv", "venv/**", "github-app", "github-app/**"]
 

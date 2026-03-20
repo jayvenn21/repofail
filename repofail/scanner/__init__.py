@@ -1,4 +1,4 @@
-"""Repo scanner — parses repo structure and produces RepoProfile."""
+"""Repo scanner - parses repo structure and produces RepoProfile."""
 
 from .repo import scan_repo
 from .host import inspect_host

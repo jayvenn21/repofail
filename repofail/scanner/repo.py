@@ -1,4 +1,4 @@
-"""Repo scanner — discovers configs recursively, parses, merges profiles."""
+"""Repo scanner - discovers configs recursively, parses, merges profiles."""
 
 from pathlib import Path
 
@@ -9,11 +9,13 @@ from .parsers import (
     parse_docker_compose,
     parse_dockerfile,
     parse_env,
+    parse_go_mod,
     parse_package_json,
     parse_pyproject,
     parse_requirements,
     parse_setup_py,
     parse_workflow,
+    scan_go_build_tags,
 )
 
 SKIP_PARTS = {".git", "__pycache__", ".venv", "venv", "node_modules", ".tox", "build", "dist", "eggs", "tests"}
@@ -37,6 +39,7 @@ def _discover_configs(repo_path: Path) -> dict[str, list[Path]]:
         "setup_py": [],
         "package_json": [],
         "cargo": [],
+        "go_mod": [],
         "dockerfile": [],
         "docker_compose": [],
         "env": [],
@@ -48,6 +51,7 @@ def _discover_configs(repo_path: Path) -> dict[str, list[Path]]:
         ("setup.py", "setup_py"),
         ("package.json", "package_json"),
         ("Cargo.toml", "cargo"),
+        ("go.mod", "go_mod"),
         ("Dockerfile", "dockerfile"),
         ("docker-compose*.yml", "docker_compose"),
         ("docker-compose*.yaml", "docker_compose"),
@@ -187,7 +191,7 @@ def scan_repo(path: str | Path) -> RepoProfile:
         add_subproject(root, "python", python_version=data.get("python_version"))
         profile.raw.setdefault("setup_py", data)
 
-    # Package.json (skip generic names like my-t3-app — prefer folder name)
+    # Package.json (skip generic names like my-t3-app - prefer folder name)
     for p in configs["package_json"]:
         root = _project_root(p)
         data = parse_package_json(p)
@@ -216,6 +220,28 @@ def scan_repo(path: str | Path) -> RepoProfile:
         profile.has_cargo_toml = True
         add_subproject(root, "rust")
         profile.raw.setdefault("cargo", data)
+        if data.get("rust_version") and not profile.rust_version_req:
+            profile.rust_version_req = data["rust_version"]
+        profile.rust_target_platforms = list(
+            dict.fromkeys(profile.rust_target_platforms + data.get("target_platforms", []))
+        )
+
+    # Go
+    for p in configs["go_mod"]:
+        root = _project_root(p)
+        data = parse_go_mod(p)
+        profile.has_go_mod = True
+        if data["go_version"]:
+            profile.go_version = data["go_version"]
+        profile.go_cgo_deps = list(dict.fromkeys(profile.go_cgo_deps + data.get("cgo_deps", [])))
+        if data["module"] and not profile.name:
+            profile.name = data["module"].rsplit("/", 1)[-1]
+        add_subproject(root, "go")
+        profile.raw.setdefault("go_mod", data)
+
+    # Go build tags
+    if profile.has_go_mod:
+        profile.go_os_specific_tags = scan_go_build_tags(repo_path)
 
     # Dockerfile
     for p in configs["dockerfile"]:

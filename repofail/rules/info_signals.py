@@ -1,4 +1,4 @@
-"""Informational rules — add nuance, never false alarm. Quality > quantity."""
+"""Informational rules - add nuance, never false alarm. Quality > quantity."""
 
 import re
 
@@ -23,10 +23,10 @@ def _host_minor(host: HostProfile) -> tuple[int, int] | None:
 
 
 def check_python_minor_mismatch(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
-    """Repo targets different Python minor than host — may cause subtle issues."""
+    """Repo targets different Python minor than host - may cause subtle issues."""
     if not repo.python_version or not host.python_version:
         return None
-    # Skip open-ended constraints (>=3.10, ^3.10) — host likely satisfies
+    # Skip open-ended constraints (>=3.10, ^3.10) - host likely satisfies
     cv = repo.python_version
     if (">=" in cv or "^" in cv) and "<" not in cv:
         repo_ver = _parse_version(cv)
@@ -54,7 +54,7 @@ def check_python_minor_mismatch(repo: RepoProfile, host: HostProfile) -> RuleRes
 
 
 def check_multiple_python_subprojects(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
-    """Multiple Python subprojects — ensure consistent virtualenvs."""
+    """Multiple Python subprojects - ensure consistent virtualenvs."""
     python_sps = [s for s in repo.subprojects if s.get("type") == "python"]
     if len(python_sps) < 2:
         return None

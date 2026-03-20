@@ -23,3 +23,9 @@ secrets.yaml
 
 # Source logo (cropped version committed as docs/logo.png)
 repofail-logo-cropped-upscaled.png
+
+# Homebrew tap is a separate repo
+homebrew-tap/
+
+# Test artifacts
+test-bot.md

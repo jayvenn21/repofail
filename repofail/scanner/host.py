@@ -1,4 +1,4 @@
-"""Host inspector — detects OS, arch, CUDA, Python, Node, Rust, compiler, RAM."""
+"""Host inspector - detects OS, arch, CUDA, Python, Node, Rust, compiler, RAM."""
 
 import platform
 import shutil
@@ -52,6 +52,7 @@ def inspect_host() -> HostProfile:
 
     node_version = _get_version("node", ["--version"])  # "v20.10.0"
     rust_version = _get_version("rustc", ["--version"], version_index=1)  # "rustc 1.75.0 ..."
+    go_version = _get_version("go", ["version"], version_index=2)  # "go version go1.21.0 darwin/arm64"
 
     has_metal = _has_metal()
     has_libgl = _has_libgl()
@@ -65,6 +66,7 @@ def inspect_host() -> HostProfile:
         python_version=python_version,
         node_version=node_version,
         rust_version=rust_version,
+        go_version=go_version,
         has_compiler=has_compiler,
         has_metal=has_metal,
         has_libgl=has_libgl,

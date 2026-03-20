@@ -1,4 +1,4 @@
-"""Rule: Docker-only dev environment — native run may not be documented."""
+"""Rule: Docker-only dev environment - native run may not be documented."""
 
 from pathlib import Path
 

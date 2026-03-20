@@ -1,4 +1,4 @@
-"""Integration tests — full pipeline on real temp repos."""
+"""Integration tests - full pipeline on real temp repos."""
 
 import tempfile
 from pathlib import Path
@@ -10,7 +10,7 @@ from repofail.engine import run_rules
 
 
 def test_full_pipeline_torch_cuda_repo():
-    """Create repo with torch.cuda, run pipeline — should get torch_cuda rule on Mac."""
+    """Create repo with torch.cuda, run pipeline - should get torch_cuda rule on Mac."""
     with tempfile.TemporaryDirectory() as d:
         (Path(d) / "model.py").write_text("import torch.cuda\ndevice = 'cuda'")
         (Path(d) / "requirements.txt").write_text("torch>=2.0\n")
@@ -30,7 +30,7 @@ def test_full_pipeline_torch_cuda_repo():
 
 
 def test_full_pipeline_repofail_on_itself():
-    """Run repofail on the repofail repo — should complete without error."""
+    """Run repofail on the repofail repo - should complete without error."""
     from pathlib import Path
     repo_path = Path(__file__).resolve().parent.parent
     repo = scan_repo(repo_path)

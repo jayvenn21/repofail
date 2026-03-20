@@ -1,4 +1,4 @@
-"""Rule: Node engine specifies EOL version (14, 16) — security/compliance risk."""
+"""Rule: Node engine specifies EOL version (14, 16) - security/compliance risk."""
 
 import re
 
@@ -35,7 +35,7 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
     return RuleResult(
         rule_id="node_eol",
         severity=Severity.HIGH,
-        message=f"Node {eol_major} is EOL — engines.node requires deprecated runtime.",
+        message=f"Node {eol_major} is EOL - engines.node requires deprecated runtime.",
         reason=(
             f"package.json engines.node specifies Node {eol_major}.x. "
             f"Node {eol_major} reached end-of-life. Security and compatibility risk."

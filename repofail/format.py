@@ -1,4 +1,4 @@
-"""Terminal output formatting — box layout, colors, width control."""
+"""Terminal output formatting - box layout, colors, width control."""
 
 import shutil
 from typing import List
@@ -28,12 +28,12 @@ def _executive_summary(results: List[RuleResult], hard: List[RuleResult]) -> str
         host = ev.get("host_node", "?")
         return f"Primary blocker: Node {eng} required, host is Node {host}."
     if r.rule_id == "lock_file_missing":
-        return "Primary blocker: No lock file — npm ci will fail."
+        return "Primary blocker: No lock file - npm ci will fail."
     if r.rule_id == "torch_cuda_mismatch":
         return "Primary blocker: Hard-coded CUDA path, host has no GPU."
     if r.rule_id == "spec_drift":
         vers = ev.get("versions", [])
-        return f"Primary blocker: Spec drift — {len(vers)} distinct Python targets across configs."
+        return f"Primary blocker: Spec drift - {len(vers)} distinct Python targets across configs."
     if r.rule_id == "python_version_mismatch":
         return f"Primary blocker: Host Python outside requires-python range."
     return f"Primary blocker: {r.message}"
@@ -247,11 +247,11 @@ def format_human(
     if verbose and confidence != "high":
         ctx = f"{ctx} (confidence: {confidence})".strip() or f"(confidence: {confidence})"
     if verbose and low_confidence_rules:
-        ctx = f"{ctx} — low-confidence: {', '.join(low_confidence_rules[:3])}".strip()
+        ctx = f"{ctx} - low-confidence: {', '.join(low_confidence_rules[:3])}".strip()
     fatal_note = ""
     hard, _, _ = _group_by_severity(results)
     if prob <= 15 and hard:
-        fatal_note = " — fatal deterministic violations present"
+        fatal_note = " - fatal deterministic violations present"
     score_str = f" Score    {prob}%{fatal_note}{ctx}"
     score_color = _score_color(prob)
     lines.append(click.style(score_str, fg=score_color))
@@ -297,9 +297,9 @@ def format_human(
         lines.append(" No high-confidence incompatibilities detected.")
 
     lines.append("─" * width)
-    footer = " Run with --json for machine output  ·  --ci for exit codes"
+    footer = " --json  ·  --ci  ·  --ai for plain English  ·  --help"
     if len(footer) > width:
-        footer = " --json  ·  --ci  ·  --help"
+        footer = " --json  ·  --ci  ·  --ai  ·  --help"
     lines.append(click.style(footer, dim=True))
     lines.append("└" + "─" * (width - 2) + "┘")
 

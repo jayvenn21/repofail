@@ -1,4 +1,4 @@
-"""Local failure telemetry — opt-in, no cloud."""
+"""Local failure telemetry - opt-in, no cloud."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ REPORTS_DIR = Path.home() / ".repofail" / "reports"
 
 @dataclass
 class FailureReport:
-    """Anonymized failure report — no paths, no repo details beyond name."""
+    """Anonymized failure report - no paths, no repo details beyond name."""
 
     timestamp: str
     repo_name: str

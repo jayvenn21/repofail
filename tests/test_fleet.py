@@ -1,4 +1,4 @@
-"""Tests for Stage 5 — audit, simulate."""
+"""Tests for Stage 5 - audit, simulate."""
 
 import json
 import tempfile

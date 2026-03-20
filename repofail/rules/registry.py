@@ -22,7 +22,7 @@ RULE_INFO = {
     "spec_drift": {
         "description": "Spec drift means multiple Python interpreter targets are defined across:\n  • pyproject.toml (requires-python)\n  • Dockerfile (FROM python:X)\n  • CI workflows (actions/setup-python)",
         "severity": "HIGH",
-        "when": "Dockerfile pins Python X, pyproject requires Python Y — inconsistent",
+        "when": "Dockerfile pins Python X, pyproject requires Python Y - inconsistent",
         "fix": "Align CI, Dockerfile, and pyproject to the same Python minor.",
     },
     "abi_wheel_mismatch": {
@@ -76,7 +76,7 @@ RULE_INFO = {
     "python_minor_mismatch": {
         "description": "Repo targets different Python minor than host.",
         "severity": "INFO",
-        "when": "repo requires 3.11, host is 3.12 — minor differences may cause subtle issues",
+        "when": "repo requires 3.11, host is 3.12 - minor differences may cause subtle issues",
         "fix": "Use matching Python (pyenv/conda) or test thoroughly.",
     },
     "multiple_python_subprojects": {
@@ -120,6 +120,36 @@ RULE_INFO = {
         "severity": "HIGH",
         "when": "package.json has deps but no lock file in same directory",
         "fix": "Run npm install and commit package-lock.json (or yarn.lock).",
+    },
+    "go_version_mismatch": {
+        "description": "go.mod requires a newer Go version than host.",
+        "severity": "HIGH",
+        "when": "go.mod go directive > host Go version",
+        "fix": "Install the required Go version (goenv, or download from golang.org).",
+    },
+    "go_cgo_no_compiler": {
+        "description": "Go project uses CGO-dependent packages but no C compiler found.",
+        "severity": "MEDIUM",
+        "when": "go.mod has CGO deps (go-sqlite3, go-gl, etc.) and no gcc/clang on host",
+        "fix": "Install Xcode CLI tools (macOS) or build-essential (Linux).",
+    },
+    "go_os_build_tags": {
+        "description": "Go source files have OS-specific build tags that exclude current host.",
+        "severity": "MEDIUM",
+        "when": "Go files have //go:build linux but host is macOS, etc.",
+        "fix": "Check if cross-compilation is supported, or run on the target OS.",
+    },
+    "rust_version_mismatch": {
+        "description": "Cargo.toml rust-version is newer than host rustc.",
+        "severity": "HIGH",
+        "when": "Cargo.toml has [package].rust-version and host rustc is older",
+        "fix": "Update Rust: rustup update stable.",
+    },
+    "rust_target_platform": {
+        "description": "Cargo.toml has target-specific dependencies for a different OS.",
+        "severity": "MEDIUM",
+        "when": "Cargo.toml has [target.'cfg(windows)'] but host is macOS/Linux, etc.",
+        "fix": "Check if cross-compilation is needed or if there are host-compatible targets.",
     },
     "port_collision_risk": {
         "description": "Required service port already in use on host.",

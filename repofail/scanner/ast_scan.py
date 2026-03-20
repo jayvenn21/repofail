@@ -1,4 +1,4 @@
-"""Light AST scan for Python imports — torch.cuda, GPU usage, etc."""
+"""Light AST scan for Python imports - torch.cuda, GPU usage, etc."""
 
 import ast
 from pathlib import Path
@@ -63,7 +63,7 @@ def _get_device_cuda_kw(node: ast.Call) -> tuple[str | None, int]:
 
 
 def _has_to_cuda(node: ast.Call) -> tuple[bool, int]:
-    """Check for .to(\"cuda\") or .to('cuda') — must be Attribute with attr 'to'."""
+    """Check for .to(\"cuda\") or .to('cuda') - must be Attribute with attr 'to'."""
     if not isinstance(node.func, ast.Attribute) or node.func.attr != "to":
         return False, 0
     if len(node.args) == 1 and isinstance(node.args[0], ast.Constant):

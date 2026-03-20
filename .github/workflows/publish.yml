@@ -1,3 +1,5 @@
+# Publishes to PyPI when you create a GitHub Release (not on tag push).
+# Correct sequence: 1) Bump version in pyproject.toml 2) Commit & push 3) Create tag & push 4) GitHub → Releases → Create release from tag → Publish
 name: Publish to PyPI
 
 on:

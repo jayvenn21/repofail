@@ -1,4 +1,4 @@
-"""Load optional rules from YAML. Step 3 — extensible, community-driven."""
+"""Load optional rules from YAML. Step 3 - extensible, community-driven."""
 
 from pathlib import Path
 from typing import Any

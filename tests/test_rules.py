@@ -247,3 +247,78 @@ def test_python_eol_fires():
     assert r is not None
     assert r.rule_id == "python_eol"
     assert r.severity.value == "HIGH"
+
+
+# ── Go rules ──────────────────────────────────────────────
+
+def test_go_version_mismatch_fires():
+    from repofail.rules.go_version import check
+    repo = _make_repo(has_go_mod=True, go_version="1.22")
+    host = _make_host(go_version="go1.20.3")
+    r = check(repo, host)
+    assert r is not None
+    assert r.rule_id == "go_version_mismatch"
+    assert r.severity.value == "HIGH"
+
+
+def test_go_version_no_fire_when_host_newer():
+    from repofail.rules.go_version import check
+    repo = _make_repo(has_go_mod=True, go_version="1.21")
+    host = _make_host(go_version="go1.22.0")
+    r = check(repo, host)
+    assert r is None
+
+
+def test_go_cgo_fires_without_compiler():
+    from repofail.rules.go_version import check_cgo
+    repo = _make_repo(has_go_mod=True, go_cgo_deps=["github.com/mattn/go-sqlite3"])
+    host = _make_host(has_compiler=False)
+    r = check_cgo(repo, host)
+    assert r is not None
+    assert r.rule_id == "go_cgo_no_compiler"
+
+
+def test_go_cgo_no_fire_with_compiler():
+    from repofail.rules.go_version import check_cgo
+    repo = _make_repo(has_go_mod=True, go_cgo_deps=["github.com/mattn/go-sqlite3"])
+    host = _make_host(has_compiler=True)
+    r = check_cgo(repo, host)
+    assert r is None
+
+
+def test_go_os_build_tags_fires():
+    from repofail.rules.go_version import check_os_build_tags
+    repo = _make_repo(has_go_mod=True, go_os_specific_tags=["linux"])
+    host = _make_host(os="macos")
+    r = check_os_build_tags(repo, host)
+    assert r is not None
+    assert r.rule_id == "go_os_build_tags"
+
+
+# ── Rust rules ────────────────────────────────────────────
+
+def test_rust_version_mismatch_fires():
+    from repofail.rules.rust_compat import check_rust_version
+    repo = _make_repo(has_cargo_toml=True, rust_version_req="1.75")
+    host = _make_host(rust_version="1.70.0")
+    r = check_rust_version(repo, host)
+    assert r is not None
+    assert r.rule_id == "rust_version_mismatch"
+    assert r.severity.value == "HIGH"
+
+
+def test_rust_version_no_fire_when_host_newer():
+    from repofail.rules.rust_compat import check_rust_version
+    repo = _make_repo(has_cargo_toml=True, rust_version_req="1.70")
+    host = _make_host(rust_version="1.80.0")
+    r = check_rust_version(repo, host)
+    assert r is None
+
+
+def test_rust_target_platform_fires():
+    from repofail.rules.rust_compat import check_rust_target_platform
+    repo = _make_repo(has_cargo_toml=True, rust_target_platforms=["cfg(windows)"])
+    host = _make_host(os="macos")
+    r = check_rust_target_platform(repo, host)
+    assert r is not None
+    assert r.rule_id == "rust_target_platform"

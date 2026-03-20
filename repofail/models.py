@@ -15,6 +15,7 @@ class HostProfile:
     python_version: Optional[str] = None
     node_version: Optional[str] = None
     rust_version: Optional[str] = None
+    go_version: Optional[str] = None
     has_compiler: bool = False  # gcc/clang for native builds
     has_metal: bool = False  # macOS Metal / MLX
     has_libgl: bool = False
@@ -50,6 +51,14 @@ class RepoProfile:
     node_native_modules: list[str] = field(default_factory=list)
     has_cargo_toml: bool = False
     rust_system_libs: list[str] = field(default_factory=list)
+    rust_version_req: str | None = None  # from Cargo.toml [package].rust-version
+    rust_target_platforms: list[str] = field(default_factory=list)  # from [target.'cfg(...)']
+
+    # Go
+    has_go_mod: bool = False
+    go_version: Optional[str] = None  # from go.mod "go 1.21"
+    go_cgo_deps: list[str] = field(default_factory=list)  # CGO-dependent packages
+    go_os_specific_tags: list[str] = field(default_factory=list)  # build tags like //go:build linux
 
     # System libs (detected from deps)
     requires_libgl: bool = False
@@ -64,7 +73,7 @@ class RepoProfile:
     github_workflows: list[str] = field(default_factory=list)
     os_specific: bool = False
 
-    # For rule output — where CUDA usage was found
+    # For rule output - where CUDA usage was found
     cuda_files: list[str] = field(default_factory=list)
     cuda_usages: list[dict] = field(default_factory=list)  # [{"file": str, "line": int, "kind": str}]
 

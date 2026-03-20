@@ -1,4 +1,4 @@
-"""Rule: Node engine version violation — package.json engines.node vs host."""
+"""Rule: Node engine version violation - package.json engines.node vs host."""
 
 import re
 

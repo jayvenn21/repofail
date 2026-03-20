@@ -1,4 +1,4 @@
-"""Rule: Python ABI / wheel mismatch — arm64 + Python 3.12 + packages that lag wheels."""
+"""Rule: Python ABI / wheel mismatch - arm64 + Python 3.12 + packages that lag wheels."""
 
 import re
 

@@ -232,8 +232,8 @@ def parse_package_json(path: Path) -> dict[str, Any]:
 
 
 def parse_cargo_toml(path: Path) -> dict[str, Any]:
-    """Parse Cargo.toml for crate name and system libs."""
-    result: dict[str, Any] = {"name": "", "system_libs": []}
+    """Parse Cargo.toml for crate name, system libs, rust-version, and target platforms."""
+    result: dict[str, Any] = {"name": "", "system_libs": [], "rust_version": None, "target_platforms": []}
     if not path.exists():
         return result
 
@@ -244,13 +244,79 @@ def parse_cargo_toml(path: Path) -> dict[str, Any]:
 
     if "package" in data:
         result["name"] = data["package"].get("name", "")
-    # Crates that typically need system libs
+        result["rust_version"] = data["package"].get("rust-version")
+
     SYSTEM_CRATES = {"openssl", "libssh2", "sqlite3", "sodiumoxide", "libgit2"}
     deps = {**data.get("dependencies", {}), **data.get("build-dependencies", {})}
     for dep in deps:
         if dep in SYSTEM_CRATES or "sys" in dep.lower():
             result["system_libs"].append(dep)
+
+    # Detect target-specific sections: [target.'cfg(windows)'.dependencies]
+    targets = data.get("target", {})
+    for key in targets:
+        # key is like "cfg(windows)" or "x86_64-unknown-linux-gnu"
+        if isinstance(key, str):
+            result["target_platforms"].append(key)
+
     return result
+
+
+# Known CGO-dependent Go packages
+CGO_PACKAGES = {
+    "github.com/mattn/go-sqlite3",
+    "github.com/go-gl/gl",
+    "github.com/miekg/pkcs11",
+    "github.com/pdfcpu/pdfcpu",
+}
+
+
+def parse_go_mod(path: Path) -> dict[str, Any]:
+    """Parse go.mod for Go version, module name, and CGO-dependent imports."""
+    result: dict[str, Any] = {"go_version": None, "module": "", "cgo_deps": []}
+    if not path.exists():
+        return result
+    content = path.read_text(errors="replace")
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("module "):
+            result["module"] = stripped.split(None, 1)[1].strip()
+        if stripped.startswith("go "):
+            result["go_version"] = stripped.split(None, 1)[1].strip()
+        if stripped.startswith("require") or stripped.startswith("\t"):
+            for pkg in CGO_PACKAGES:
+                if pkg in stripped:
+                    result["cgo_deps"].append(pkg)
+    return result
+
+
+def scan_go_build_tags(repo_path: Path) -> list[str]:
+    """Scan .go files for OS-specific build tags."""
+    tags = []
+    try:
+        for go_file in repo_path.rglob("*.go"):
+            # Skip vendor, testdata
+            parts = go_file.relative_to(repo_path).parts
+            if any(p in ("vendor", "testdata", ".git", "node_modules") for p in parts):
+                continue
+            try:
+                head = go_file.read_text(errors="replace")[:500]
+            except Exception:
+                continue
+            for line in head.splitlines():
+                line = line.strip()
+                if not line.startswith("//"):
+                    if line and not line.startswith("package"):
+                        break
+                    continue
+                if "go:build" in line or "+build" in line:
+                    for os_tag in ("linux", "darwin", "windows", "freebsd"):
+                        if os_tag in line:
+                            if os_tag not in tags:
+                                tags.append(os_tag)
+    except Exception:
+        pass
+    return tags
 
 
 def parse_dockerfile(path: Path) -> dict[str, Any]:

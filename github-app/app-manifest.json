@@ -1,0 +1,17 @@
+{
+  "name": "repofail",
+  "url": "https://github.com/jayvenn21/repofail",
+  "description": "Deterministic runtime compatibility analysis - auto-comments on PRs with environment-specific warnings before you waste time debugging.",
+  "hook_attributes": {
+    "url": "https://YOUR_DEPLOY_URL/webhook",
+    "active": true
+  },
+  "redirect_url": "https://YOUR_DEPLOY_URL/setup",
+  "public": true,
+  "default_events": ["pull_request"],
+  "default_permissions": {
+    "contents": "read",
+    "pull_requests": "write",
+    "metadata": "read"
+  }
+}

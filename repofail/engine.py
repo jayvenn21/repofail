@@ -1,4 +1,4 @@
-"""Rule engine — runs five rules against repo + host profiles."""
+"""Rule engine - runs five rules against repo + host profiles."""
 
 from pathlib import Path
 
@@ -22,6 +22,8 @@ from .rules import (
     info_signals,
     port_collision,
     docker_only,
+    go_version,
+    rust_compat,
 )
 
 
@@ -43,6 +45,11 @@ def run_rules(repo: RepoProfile, host: HostProfile) -> list[RuleResult]:
         system_libs.check,
         port_collision.check,
         docker_only.check,
+        rust_compat.check_rust_version,
+        rust_compat.check_rust_target_platform,
+        go_version.check,
+        go_version.check_cgo,
+        go_version.check_os_build_tags,
         ml_niche.check_lora_mlx_scaling,
         ml_niche.check_torchao_incompatible,
     ]

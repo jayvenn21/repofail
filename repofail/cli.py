@@ -1,4 +1,4 @@
-"""CLI entry point — scan repo, run rules, output clearly."""
+"""CLI entry point - scan repo, run rules, output clearly."""
 
 import json
 import sys
@@ -10,11 +10,11 @@ import typer
 
 
 def _err(msg: str) -> None:
-    """Raise a styled error (red box) — used for all CLI errors."""
+    """Raise a styled error (red box) - used for all CLI errors."""
     raise click.BadParameter(msg)
 
 # Subcommands (short names so "repofail gen" works)
-_SUBCOMMANDS = {"gen", "s", "a", "sim", "check", "lock", "verify", "fleet"}
+_SUBCOMMANDS = {"gen", "s", "a", "sim", "check", "lock", "verify", "fleet", "init"}
 
 
 def _preprocess_argv():
@@ -34,7 +34,7 @@ def _preprocess_argv():
         if t.startswith("-"):
             opt_tokens.append(t)
             i += 1
-            if "=" not in t and i < len(argv) and not argv[i].startswith("-") and t in ("--explain", "-e", "--path", "-p", "--fail-on"):
+            if "=" not in t and i < len(argv) and not argv[i].startswith("-") and t in ("--explain", "-e", "--path", "-p", "--fail-on", "--model"):
                 opt_tokens.append(argv[i])
                 i += 1
         else:
@@ -56,16 +56,13 @@ from .format import format_human
 
 app = typer.Typer(help="Predict why a repository will fail on your machine.")
 
-fleet_app = typer.Typer(help="Fleet-wide compliance and scanning.")
-
-
-@fleet_app.command("scan")
-def fleet_scan_cmd(
+@app.command("fleet")
+def fleet_cmd(
     path: Path = typer.Argument(Path("."), exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Root dir to scan (e.g. ~/org)"),
     policy: Optional[Path] = typer.Option(None, "--policy", "-P", path_type=Path, help="Policy YAML (fail_on, max_repos, max_depth)"),
     json_out: bool = typer.Option(False, "--json", "-j", help="Output JSON"),
 ) -> None:
-    """Scan all repos under path; report violations, most common drift, risk clusters."""
+    """Fleet-wide compliance scan - violations, drift, risk clusters."""
     if not path.exists() or not path.is_dir():
         _err(f"Directory not found: {path}")
     summary = fleet_scan(path, policy_path=policy)
@@ -97,9 +94,6 @@ def fleet_scan_cmd(
             raise typer.Exit(1)
 
 
-app.add_typer(fleet_app, name="fleet")
-
-
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
@@ -108,6 +102,8 @@ def main(
     ci: bool = typer.Option(False, "--ci", help="CI mode: exit 1 if HIGH rules fire"),
     fail_on: str = typer.Option("HIGH", "--fail-on", help="In CI mode: fail on this severity or higher (HIGH/MEDIUM/LOW)"),
     explain: str = typer.Option(None, "--explain", "-e", help="Explain a rule by ID and exit"),
+    ai: bool = typer.Option(False, "--ai", help="AI-powered plain English explanations and fix suggestions (requires REPOFAIL_API_KEY or Ollama)"),
+    model: str = typer.Option(None, "--model", help="LLM model for --ai (default: gpt-4o-mini). Supports OpenAI, Anthropic, ollama/*)"),
     report: bool = typer.Option(False, "--report", "-r", help="Save failure report locally (opt-in telemetry)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Include rule IDs and low-confidence hints"),
     path: Path = typer.Option(Path("."), "--path", "-p", exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Repo path (default: .)"),
@@ -133,6 +129,9 @@ def main(
         _print_markdown(repo_profile, host_profile, results)
     else:
         _print_human(repo_profile, host_profile, results, verbose)
+
+    if ai:
+        _print_ai_explanation(repo_profile, host_profile, results, model)
 
     if report and results:
         saved = save_report(repo_profile.name or repo_profile.path, results, host_profile)
@@ -193,7 +192,7 @@ def _stack_items(repo_profile) -> list[str]:
 
 
 def _print_human(repo_profile, host_profile, results, verbose: bool = False) -> None:
-    """Human-readable output — box layout, score, findings, footer."""
+    """Human-readable output - box layout, score, findings, footer."""
     from .risk import run_confidence
 
     prob = estimate_success_probability(results)
@@ -206,6 +205,24 @@ def _print_human(repo_profile, host_profile, results, verbose: bool = False) -> 
         low_confidence_rules=low_conf_rules if verbose else None,
     )
     typer.echo(text)
+
+
+def _print_ai_explanation(repo_profile, host_profile, results, model: str | None) -> None:
+    """Run AI explanation on scan results and print."""
+    from .ai import explain, check_ai_available
+
+    available, reason = check_ai_available()
+    if not available:
+        typer.echo(f"\n⚠ AI explanation unavailable: {reason}", err=True)
+        return
+
+    prob = estimate_success_probability(results)
+    typer.echo("\n── AI Explanation ──────────────────────────────", err=True)
+    try:
+        text = explain(repo_profile, host_profile, results, prob, model=model)
+        typer.echo(text)
+    except Exception as e:
+        typer.echo(f"\n⚠ AI explanation failed: {e}", err=True)
 
 
 def _print_explain(rule_id: str) -> None:
@@ -355,7 +372,7 @@ def audit_cmd(
     path: Path = typer.Argument(Path("."), file_okay=False, dir_okay=True, help="Dir of repos"),
     json_out: bool = typer.Option(False, "-j", help="JSON output"),
 ) -> None:
-    """Scan all repos in directory — fleet-wide compatibility check."""
+    """Scan all repos in directory - fleet-wide compatibility check."""
     if not path.exists() or not path.is_dir():
         _err(f"Directory not found: {path}\nUse a path that exists, e.g. repofail a .")
     results = audit(path)
@@ -376,7 +393,7 @@ def audit_cmd(
         rules_preview = ", ".join(r["rules"][:5]) or "none"
         if len(r.get("rules", [])) > 5:
             rules_preview += " ..."
-        typer.echo(f"  [{status}] {r['name']}: {r['rule_count']} issue(s) — {rules_preview}")
+        typer.echo(f"  [{status}] {r['name']}: {r['rule_count']} issue(s) - {rules_preview}")
 
 
 @app.command("sim")
@@ -404,6 +421,17 @@ def sim_cmd(
     for r in results:
         typer.echo(f"  [{r.severity.value}] {r.rule_id}: {r.message}")
     raise typer.Exit(1)
+
+
+@app.command("init")
+def init_cmd(
+    path: Path = typer.Option(Path("."), "--path", "-p", exists=True, file_okay=False, dir_okay=True, resolve_path=True, help="Repo path"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Non-interactive mode (accept defaults)"),
+) -> None:
+    """Initialize .repofail.yaml config for this repo (interactive)."""
+    from .init import run_init
+    out = run_init(path, non_interactive=yes)
+    typer.echo(f"Created {out}")
 
 
 @app.command("lock")

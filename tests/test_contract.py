@@ -1,4 +1,4 @@
-"""Tests for Stage 3 — environment contracts."""
+"""Tests for Stage 3 - environment contracts."""
 
 import json
 import tempfile

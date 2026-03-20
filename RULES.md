@@ -67,7 +67,7 @@ repofail --explain torch_cuda_mismatch
 
 ---
 
-## YAML Rules (Step 3 — Extensible)
+## YAML Rules (Step 3 - Extensible)
 
 Add `.repofail/rules.yaml` or `repofail-rules.yaml` in your repo:
 

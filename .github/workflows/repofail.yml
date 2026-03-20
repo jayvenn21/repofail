@@ -1,4 +1,4 @@
-# repofail — CI guardrail for runtime compatibility
+# repofail - CI guardrail for runtime compatibility
 #
 # In this repo: checks repofail itself.
 # To use in your repo: copy this file, change install step to:

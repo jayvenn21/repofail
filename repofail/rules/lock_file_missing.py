@@ -1,4 +1,4 @@
-"""Rule: package.json has dependencies but no lock file — npm ci will fail."""
+"""Rule: package.json has dependencies but no lock file - npm ci will fail."""
 
 from ..models import HostProfile, RepoProfile
 from .base import RuleResult, Severity
@@ -12,7 +12,7 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
     return RuleResult(
         rule_id="lock_file_missing",
         severity=Severity.HIGH,
-        message="No lock file (package-lock.json or yarn.lock) — npm ci will fail.",
+        message="No lock file (package-lock.json or yarn.lock) - npm ci will fail.",
         reason=(
             "package.json has dependencies but no package-lock.json or yarn.lock. "
             "npm ci requires a lock file. npm install will produce non-deterministic installs."

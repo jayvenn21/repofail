@@ -1,4 +1,4 @@
-"""Environment contract — versioned runtime expectations."""
+"""Environment contract - versioned runtime expectations."""
 
 from __future__ import annotations
 

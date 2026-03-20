@@ -1,4 +1,4 @@
-"""Stage 5 — Fleet/enterprise: audit, simulate, fleet scan."""
+"""Stage 5 - Fleet/enterprise: audit, simulate, fleet scan."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def _find_repos(base_path: Path, max_depth: int = 4, max_repos: int = 50) -> lis
             return
         if _is_repo(d):
             found.append(d)
-            return  # Don't descend — this dir is the repo root
+            return  # Don't descend - this dir is the repo root
         for child in sorted(d.iterdir()):
             if child.is_dir():
                 walk(child, depth + 1)

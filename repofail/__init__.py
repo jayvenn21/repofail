@@ -1,4 +1,4 @@
-"""repofail — Failure-oriented repo introspection."""
+"""repofail - Failure-oriented repo introspection."""
 
 from importlib.metadata import PackageNotFoundError, version
 

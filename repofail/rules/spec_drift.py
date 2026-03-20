@@ -1,4 +1,4 @@
-"""Rule: Spec drift — Python version inconsistent across pyproject, Dockerfile, CI."""
+"""Rule: Spec drift - Python version inconsistent across pyproject, Dockerfile, CI."""
 
 import re
 
@@ -17,7 +17,7 @@ def _extract_minor(ver: str | None) -> str | None:
 def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
     """
     If pyproject, Dockerfile, and CI matrix specify different Python versions
-    across source types, flag as spec drift — runtime expectations inconsistent.
+    across source types, flag as spec drift - runtime expectations inconsistent.
     """
     by_source: dict[str, set[str]] = {}
     sources: list[str] = []
@@ -50,7 +50,7 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
         by_source["ci"] = ci_versions
 
     # Drift = Docker version conflicts with pyproject (or CI)
-    # Skip when no Docker — CI matrix testing multiple versions is intentional
+    # Skip when no Docker - CI matrix testing multiple versions is intentional
     has_docker = "docker" in by_source
     if not has_docker:
         return None
@@ -63,7 +63,7 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
     return RuleResult(
         rule_id="spec_drift",
         severity=Severity.HIGH,
-        message="Spec drift detected — Python versions inconsistent across project definitions.",
+        message="Spec drift detected - Python versions inconsistent across project definitions.",
         reason=(
             f"Found: {', '.join(sorted(all_versions))}. "
             "Runtime expectations are inconsistent (pyproject vs Docker vs CI)."

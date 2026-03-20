@@ -1,4 +1,4 @@
-"""Rule: CUDA required but host has no GPU — deterministic, HIGH when hardcoded."""
+"""Rule: CUDA required but host has no GPU - deterministic, HIGH when hardcoded."""
 
 from ..models import HostProfile, RepoProfile
 from .base import RuleResult, Severity

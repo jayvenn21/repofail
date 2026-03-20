@@ -1,4 +1,4 @@
-"""Tests for Stage 4 — local failure telemetry."""
+"""Tests for Stage 4 - local failure telemetry."""
 
 import json
 import tempfile

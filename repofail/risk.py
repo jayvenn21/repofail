@@ -1,4 +1,4 @@
-"""Probabilistic failure risk estimation — deterministic, explainable."""
+"""Probabilistic failure risk estimation - deterministic, explainable."""
 
 from .rules.base import RuleResult, Severity
 

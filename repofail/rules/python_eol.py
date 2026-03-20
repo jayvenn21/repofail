@@ -1,4 +1,4 @@
-"""Rule: requires-python pins to EOL version (3.7, 3.8) — security risk."""
+"""Rule: requires-python pins to EOL version (3.7, 3.8) - security risk."""
 
 import re
 
@@ -37,7 +37,7 @@ def check(repo: RepoProfile, host: HostProfile) -> RuleResult | None:
     return RuleResult(
         rule_id="python_eol",
         severity=Severity.HIGH,
-        message=f"Python {major}.{minor} is EOL — requires-python pins to deprecated runtime.",
+        message=f"Python {major}.{minor} is EOL - requires-python pins to deprecated runtime.",
         reason=(
             f"requires-python allows/pins Python {major}.{minor}. "
             f"Python {major}.{minor} reached end-of-life. Security and compatibility risk."

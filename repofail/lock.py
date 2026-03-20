@@ -1,4 +1,4 @@
-"""Runtime lock — pin host + optional docker base for CI enforcement."""
+"""Runtime lock - pin host + optional docker base for CI enforcement."""
 
 from __future__ import annotations
 
