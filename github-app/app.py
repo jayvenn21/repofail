@@ -64,10 +64,14 @@ def _run_repofail(repo_path: Path) -> dict:
         text=True,
         timeout=60,
     )
+    log.info(f"repofail exit={result.returncode} stdout_len={len(result.stdout)} stderr_len={len(result.stderr)}")
+    if result.stderr:
+        log.info(f"repofail stderr: {result.stderr[:500]}")
     import json
     try:
         return json.loads(result.stdout)
     except Exception:
+        log.error(f"Failed to parse repofail output: {result.stdout[:500]}")
         return {"error": result.stderr or "repofail produced no output", "raw": result.stdout[:2000]}
 
 
@@ -84,6 +88,7 @@ def _post_comment(token: str, owner: str, repo: str, pr_number: int, body: str) 
 
     comments_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments"
     resp = httpx.get(comments_url, headers=headers, params={"per_page": 100})
+    log.info(f"List comments: {resp.status_code}")
     existing = None
     if resp.status_code == 200:
         for c in resp.json():
@@ -93,11 +98,13 @@ def _post_comment(token: str, owner: str, repo: str, pr_number: int, body: str) 
 
     if existing:
         update_url = f"https://api.github.com/repos/{owner}/{repo}/issues/comments/{existing}"
-        httpx.patch(update_url, headers=headers, json={"body": body_with_marker})
-        log.info(f"Updated existing comment {existing} on {owner}/{repo}#{pr_number}")
+        r = httpx.patch(update_url, headers=headers, json={"body": body_with_marker})
+        log.info(f"Update comment: {r.status_code} {r.text[:500]}")
     else:
-        httpx.post(comments_url, headers=headers, json={"body": body_with_marker})
-        log.info(f"Posted new comment on {owner}/{repo}#{pr_number}")
+        r = httpx.post(comments_url, headers=headers, json={"body": body_with_marker})
+        log.info(f"Post comment: {r.status_code} {r.text[:500]}")
+        if r.status_code >= 400:
+            log.error(f"Failed to post comment: {r.status_code} {r.text}")
 
 
 @app.get("/")

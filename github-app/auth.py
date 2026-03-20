@@ -8,35 +8,60 @@ Flow:
 
 from __future__ import annotations
 
+import base64
+import logging
 import os
+import re
 import time
 
 import httpx
 import jwt
+
+log = logging.getLogger("repofail-app")
 
 APP_ID = os.environ.get("GITHUB_APP_ID", "")
 PRIVATE_KEY = os.environ.get("GITHUB_PRIVATE_KEY", "")
 PRIVATE_KEY_PATH = os.environ.get("GITHUB_PRIVATE_KEY_PATH", "")
 
 
+def _normalize_pem(raw: str) -> str:
+    """Reconstruct a valid PEM from a potentially mangled env var value."""
+    key = raw.strip()
+    key = key.replace("\\n", "\n").replace("\\r", "")
+
+    # If it already looks like valid multi-line PEM, return as-is
+    lines = key.split("\n")
+    if len(lines) > 3 and lines[0].startswith("-----BEGIN"):
+        return key if key.endswith("\n") else key + "\n"
+
+    # Strip all PEM headers/footers and whitespace, then reconstruct
+    body = re.sub(r"-----[A-Z ]+-----", "", key)
+    body = re.sub(r"\s+", "", body)
+
+    # Validate it's valid base64
+    try:
+        base64.b64decode(body)
+    except Exception:
+        log.error(f"PEM body is not valid base64 (len={len(body)}, first 20 chars: {body[:20]})")
+        raise ValueError("Invalid PEM key - base64 decode failed")
+
+    pem_lines = [body[i:i+64] for i in range(0, len(body), 64)]
+    return (
+        "-----BEGIN RSA PRIVATE KEY-----\n"
+        + "\n".join(pem_lines)
+        + "\n-----END RSA PRIVATE KEY-----\n"
+    )
+
+
 def _get_private_key() -> str:
     if PRIVATE_KEY:
-        key = PRIVATE_KEY
-        # Handle various newline encodings from env var paste
-        key = key.replace("\\n", "\n")
-        key = key.replace("\\r", "")
-        # If the key got pasted as a single line, reconstruct PEM format
-        if "-----BEGIN" in key and "\n" not in key.strip().split("-----")[2]:
-            parts = key.split("-----")
-            header = f"-----{parts[1]}-----"
-            footer = f"-----{parts[3]}-----"
-            body = parts[2].strip()
-            # Split body into 64-char lines
-            lines = [body[i:i+64] for i in range(0, len(body), 64)]
-            key = header + "\n" + "\n".join(lines) + "\n" + footer + "\n"
+        key = _normalize_pem(PRIVATE_KEY)
+        log.info(f"PEM key loaded from env var (len={len(key)}, lines={key.count(chr(10))})")
         return key
     if PRIVATE_KEY_PATH and os.path.isfile(PRIVATE_KEY_PATH):
-        return open(PRIVATE_KEY_PATH).read()
+        key = open(PRIVATE_KEY_PATH).read()
+        log.info(f"PEM key loaded from file {PRIVATE_KEY_PATH}")
+        return key
     raise RuntimeError(
         "GitHub App private key not configured. "
         "Set GITHUB_PRIVATE_KEY or GITHUB_PRIVATE_KEY_PATH."
