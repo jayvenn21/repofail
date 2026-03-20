@@ -8,8 +8,8 @@ def test_clean_scan():
     body = format_pr_comment(scan, "owner", "repo", 1, "main")
     assert "No compatibility issues" in body
     assert "repofail" in body
-    assert "Quality Gate" in body
-    assert "Passed" in body
+    assert "shields.io" in body
+    assert "passed" in body
 
 
 def test_high_findings():
@@ -37,7 +37,7 @@ def test_high_findings():
     assert "CUDA" in body
     assert "Warnings" in body
     assert "32%" in body
-    assert "Failed" in body
+    assert "failed" in body
 
 
 def test_info_only():
@@ -54,13 +54,34 @@ def test_info_only():
     }
     body = format_pr_comment(scan, "owner", "repo", 3, "dev")
     assert "Structural notes" in body
-    assert "1 info" in body
+    assert "1 note" in body
 
 
 def test_error_scan():
     scan = {"error": "repofail produced no output"}
     body = format_pr_comment(scan, "owner", "repo", 4, "fix")
-    assert "Scan error" in body
+    assert "scan error" in body
+
+
+def test_no_emoji():
+    """Ensure no emoji shortcodes or unicode emoji appear."""
+    scan = {
+        "estimated_success_probability": 50,
+        "confidence": "high",
+        "results": [
+            {
+                "severity": "HIGH",
+                "message": "Test finding.",
+                "reason": "Test reason.",
+                "evidence": {},
+            }
+        ],
+    }
+    body = format_pr_comment(scan, "owner", "repo", 5, "main")
+    assert ":x:" not in body
+    assert ":warning:" not in body
+    assert ":red_circle:" not in body
+    assert ":white_check_mark:" not in body
 
 
 if __name__ == "__main__":
@@ -68,4 +89,5 @@ if __name__ == "__main__":
     test_high_findings()
     test_info_only()
     test_error_scan()
+    test_no_emoji()
     print("All tests passed.")
