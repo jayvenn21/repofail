@@ -8,6 +8,8 @@ def test_clean_scan():
     body = format_pr_comment(scan, "owner", "repo", 1, "main")
     assert "No compatibility issues" in body
     assert "repofail" in body
+    assert "Quality Gate" in body
+    assert "Passed" in body
 
 
 def test_high_findings():
@@ -31,11 +33,11 @@ def test_high_findings():
         ],
     }
     body = format_pr_comment(scan, "owner", "repo", 2, "feature")
-    assert "Hard failures" in body
+    assert "Critical Issues" in body
     assert "CUDA" in body
-    assert "Runtime risks" in body
+    assert "Warnings" in body
     assert "32%" in body
-    assert "Action required" in body
+    assert "Failed" in body
 
 
 def test_info_only():
@@ -52,13 +54,13 @@ def test_info_only():
     }
     body = format_pr_comment(scan, "owner", "repo", 3, "dev")
     assert "Structural notes" in body
-    assert "1 note" in body
+    assert "1 info" in body
 
 
 def test_error_scan():
     scan = {"error": "repofail produced no output"}
     body = format_pr_comment(scan, "owner", "repo", 4, "fix")
-    assert "Scan failed" in body
+    assert "Scan error" in body
 
 
 if __name__ == "__main__":
