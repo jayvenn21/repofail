@@ -243,17 +243,19 @@ def scan_repo(path: str | Path) -> RepoProfile:
     if profile.has_go_mod:
         profile.go_os_specific_tags = scan_go_build_tags(repo_path)
 
-    # Dockerfile
+    # Dockerfile (only root-level Dockerfiles define canonical Python for spec drift)
     for p in configs["dockerfile"]:
         root = _project_root(p)
         data = parse_dockerfile(p)
+        is_root_docker = _is_root(root, repo_path)
         profile.has_dockerfile = True
         profile.dockerfile_has_cuda = profile.dockerfile_has_cuda or data.get("has_cuda", False)
         profile.docker_platform_amd64 = profile.docker_platform_amd64 or data.get("platform_amd64", False)
-        if data["python_version"] and not profile.python_version:
+        if is_root_docker and data["python_version"] and not profile.python_version:
             profile.python_version = data["python_version"]
         add_subproject(root, "docker")
-        profile.raw.setdefault("dockerfile", data)
+        if is_root_docker:
+            profile.raw.setdefault("dockerfile", data)
 
     # Devcontainer
     profile.has_devcontainer = (
